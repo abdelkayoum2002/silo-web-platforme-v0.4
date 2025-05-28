@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>SMART SILO</title>
+      <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100&icon_names=favorite,home,search,settings" rel="stylesheet" />
+      <script src="/socket.io/socket.io.js"></script>
+      <script src="notification.js"></script>
+      <!-- ======= Styles ====== -->
+      <link rel="stylesheet" href="assets/css/style.css">
+      <style>
+         /* ====== Messages Table Styling ====== */
+         #messagesTable {
+         width: 100%;
+         border-collapse: collapse;
+         background: #fff;
+         box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+         border-radius: 8px;
+         overflow: hidden;
+         position: relative;
+         }
+         /* Table header */
+         #messagesTable thead tr {
+         background: linear-gradient(90deg, #67db24 0%, #1a9720 100%);
+         color: #fff;
+         text-transform: uppercase;
+         font-weight: 600;
+         }
+         #messagesTable th {
+         padding: 12px 15px;
+         cursor: pointer;
+         user-select: none;
+         transition: background-color 0.3s ease;
+         }
+         #messagesTable th:hover {
+         background-color: #2a3a72;
+         }
+         /* Table body rows */
+         #messagesTable tbody tr {
+         border-bottom: 1px solid #ddd;
+         transition: background-color 0.3s ease;
+         }
+         #messagesTable tbody tr:nth-child(even) {
+         background-color: #f9f9f9;
+         }
+         #messagesTable tbody tr:hover {
+         background-color: #e6f0ff;
+         }
+         #messagesTable td {
+         padding: 12px 15px;
+         font-size: 14px;
+         vertical-align: middle;
+         word-wrap: break-word;
+         }
+         #messagesTable td.message {
+         max-width: 300px;
+         white-space: normal;
+         word-break: break-word;
+         }
+         /* ====== Swipe-to-show-delete Styling ====== */
+         /* Row that can be swiped */
+         .swipeable-row {
+         position: relative;
+         transition: transform 0.3s ease;
+         }
+         /* Shifted right when clicked */
+         .swipeable-row.swiped {
+         transform: translateX(50px);
+         background-color: #ffecec;
+         }
+         /* Delete button positioned outside to the left */
+         .delete-btn-fixed {
+         position: absolute;
+         left: -60px;
+         top: 50%;
+         transform: translateY(-50%);
+         z-index: 1;
+         display: none;
+         }
+         .swipeable-row.swiped .delete-btn-fixed {
+         display: block;
+         }
+         /* Delete button style */
+         .delete-btn-fixed button {
+         background-color: #ff4d4f;
+         border: none;
+         color: white;
+         padding: 6px 8px;
+         border-radius: 4px;
+         cursor: pointer;
+         white-space: nowrap;
+         }
+         /* Disable text selection for ID cells */
+         .id-cell {
+         user-select: none;
+         cursor: pointer;
+         }
+      </style>
+   </head>
+   <body>
+      <!-- =============== Navigation ================ -->
+      <div class="container">
+      <div class="navigation">
+         <ul>
+            <li>
+               <a href="#">
+                  <span class="icon">
+                     <ion-icon name=""></ion-icon>
+                  </span>
+                  <span class="title">Menu</span>
+               </a>
+            </li>
+            <li>
+               <a href="Dashboard.html">
+                  <span class="icon">
+                     <ion-icon name="home-outline"></ion-icon>
+                  </span>
+                  <span class="title">Dashboard</span>
+               </a>
+            </li>
+            <li>
+               <a href="system.html">
+                  <span class="icon">
+                     <ion-icon name="people-outline"></ion-icon>
+                  </span>
+                  <span class="title">System</span>
+               </a>
+            </li>
+            <li>
+               <a href="Analytics.html">
+                  <span class="icon">
+                     <ion-icon name="analytics-outline"></ion-icon>
+                  </span>
+                  <span class="title">Analytics</span>
+               </a>
+            </li>
+            <li>
+               <a href="Messages.html">
+                  <span class="icon">
+                     <ion-icon name="chatbubble-outline"></ion-icon>
+                  </span>
+                  <span class="title">Messages</span>
+               </a>
+            </li>
+            <li>
+               <a href="Settings.html">
+                  <span class="icon">
+                     <ion-icon name="settings-outline"></ion-icon>
+                  </span>
+                  <span class="title">Settings</span>
+               </a>
+            </li>
+            <li>
+               <a href="Password.html">
+                  <span class="icon">
+                     <ion-icon name="lock-closed-outline"></ion-icon>
+                  </span>
+                  <span class="title">Password</span>
+               </a>
+            </li>
+            <li>
+               <a href="index.html">
+                  <span class="icon">
+                     <ion-icon name="log-out-outline"></ion-icon>
+                  </span>
+                  <span class="title">Sign Out</span>
+               </a>
+            </li>
+         </ul>
+      </div>
+      <!-- ========================= Main ==================== -->
+      <div class="main">
+         <div class="topbar">
+            <div class="toggle">
+               <ion-icon name="menu-outline"></ion-icon>
+            </div>
+            <div class="silo">
+               <span class="title">SMART SILO</span>
+            </div>
+            <div class="user">
+               <img src="assets/imgs/customer001.jpg" alt="">
+            </div>
+         </div>
+         <h2 style="text-align: center;">Messages Log</h2>
+         <div class="search">
+            <label>
+               <input type="text" placeholder="Search here" id="searchInput">
+               <ion-icon name="search-outline"></ion-icon>
+            </label>
+         </div>
+         <table id="messagesTable">
+            <thead>
+               <tr>
+                  <th data-column="id">ID</th>
+                  <th data-column="type">Type</th>
+                  <th data-column="from">From</th>
+                  <th data-column="message">Message</th>
+                  <th data-column="timestamp">Timestamp</th>
+               </tr>
+            </thead>
+            <tbody></tbody>
+         </table>
+         <div id="paginationControls" style="text-align: center; margin-top: 10px;">
+            <button id="prevPage">Previous</button>
+            <button id="nextPage">Next</button>
+         </div>
+      </div>
+      <script>
+         let offset=0;
+         const order = {
+           orderBy: 'timestamp',
+           direction: 'DESC'
+         };
+         let value='';
+         socket.emit('SQLCommande',{Commande:'getMSG',Paramtere:offset})
+         
+         function formatLocalTime(utcString) {
+         const date = new Date(utcString + ' UTC'); // Force UTC interpretation
+         return date.toLocaleString(); // Converts to local time
+         }
+         
+         function handleSearch() {
+            value = document.getElementById("searchInput").value.trim();
+            if(value!==''){
+             document.getElementById('nextPage').style.display = 'none';
+             document.getElementById('prevPage').style.display = 'none';}
+            else{
+             document.getElementById('nextPage').style.display = 'inline-block';
+             document.getElementById('prevPage').style.display = 'inline-block';
+             socket.emit('SQLCommande',{Commande:'getMSG',Paramtere:offset});
+             return;}
+             socket.emit('SQLCommande',{Commande:'search',Paramtere:{value,order}})
+         }
+         
+         
+         
+         document.addEventListener('DOMContentLoaded', () => {
+         const headers = document.querySelectorAll('#messagesTable th');
+         
+         headers.forEach(th => {
+           // Initialize each <th> with default direction
+           th.dataset.direction = 'DESC';
+         
+           th.addEventListener('click', () => {
+             const column = th.getAttribute('data-column');
+             let currentDirection = th.dataset.direction;
+         
+             // Toggle direction for this column
+             const newDirection = currentDirection === 'DESC' ? 'ASC' : 'DESC';
+             th.dataset.direction = newDirection;
+         
+             // Reset all other headers' direction to 'asc'
+             headers.forEach(otherTh => {
+               if (otherTh !== th) {
+                 otherTh.dataset.direction = 'DESC';
+               }
+             });
+         
+             // Update global order object
+             order.orderBy = column;
+             order.direction = newDirection;
+         
+             console.log('Sorting by:', order.orderBy, 'Direction:', order.direction);
+             handleSearch();
+           });
+         });
+         });
+         
+         document.getElementById('nextPage').addEventListener('click', () =>{
+             offset=offset+11;
+             socket.emit('SQLCommande',{Commande:'getMSG',Paramtere:offset})
+         })
+         
+         document.getElementById('prevPage').addEventListener('click', () =>{
+             offset=offset-11;
+             socket.emit('SQLCommande',{Commande:'getMSG',Paramtere:offset})
+         })
+         
+         document.getElementById("searchInput").addEventListener("input", handleSearch);
+         
+         socket.on('tableData', (data) => {
+           const tbody = document.querySelector('#messagesTable tbody');
+           tbody.innerHTML = ''; // Clear current rows
+           data.forEach(row => {
+         const tr = document.createElement('tr');
+         tr.classList.add('swipeable-row');
+         tr.setAttribute('data-id', row.id);
+         
+         tr.innerHTML = `
+         <td class="id-cell">${row.id}</td>
+         <td>${row.type}</td>
+         <td>${row.from}</td>
+         <td>${row.message}</td>
+         <td>${formatLocalTime(row.timestamp)}</td>
+         `;
+         
+         // Add delete button OUTSIDE the flow
+         const deleteBtn = document.createElement('div');
+         deleteBtn.classList.add('delete-btn-fixed');
+         deleteBtn.innerHTML = `<button>Delete</button>`;
+         tr.appendChild(deleteBtn);
+         
+         tbody.appendChild(tr);
+         
+         
+           });
+         // Click to toggle swipe and show/hide delete
+         document.querySelectorAll('.id-cell').forEach(cell => {
+         cell.addEventListener('click', () => {
+         const row = cell.closest('.swipeable-row');
+         row.classList.toggle('swiped');
+         });
+         });
+         
+         // Handle delete button
+         document.querySelectorAll('.delete-btn-fixed button').forEach(btn => {
+         btn.addEventListener('click', (e) => {
+         e.stopPropagation();
+         const row = btn.closest('tr');
+         const id = row.getAttribute('data-id');
+         
+         socket.emit('SQLCommande', {
+           Commande: 'deleteMSG',
+           Paramtere: Number(id)
+         });
+         
+         row.remove();
+         socket.emit('SQLCommande',{Commande:'getMSG',Paramtere:offset})
+         });
+         });
+         
+         
+         
+         });
+         
+         socket.on('message', (data) => {
+           if(offset==0){
+           socket.emit('SQLCommande',{Commande:'getMSG',Paramtere:offset})}
+         });
+      </script>
+      <!-- =========== Scripts =========  -->
+      <script src="assets/js/main.js"></script>
+      <!-- ====== ionicons ======= -->
+      <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+      <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=favorite,home,search,settings" rel="stylesheet" />
+      <!-- Load React and Babel -->
+      <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+      <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+      <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+      <!-- Load scripts -->
+      <script type="module" src="assets/js/DataService.js"></script>
+      <script src="assets/js/Notification.js"></script>
+      <script src="assets/js/main.js"></script>
+      <script src="assets/js/Dashboard.js"></script>
+   </body>
+</html>

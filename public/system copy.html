@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART SILO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100&icon_names=favorite,home,search,settings" rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="notification.js"></script>
+
+    <!-- ======= Styles ====== -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+      .emergencybtn {
+  padding: 1px 2px;
+  background-color: red;
+  color: white;
+  font-weight: bold;
+  font-size: larger;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.emergencybtn:hover {
+  background-color: darkred;
+}
+
+.EmergensyStopStatus {
+  margin-left: 10px;
+  font-weight: 500;
+  color: red;
+}
+
+    </style>
+</head>
+
+<body>
+    <!-- =============== Navigation ================ -->
+    <div class="container">
+      <div class="navigation">
+  
+        <ul>
+          <li>
+            <a href="#">
+              <span class="icon"><ion-icon name=""></ion-icon></span> 
+              <span class="title">Menu</span>
+            </a>
+          </li>
+
+                <li>
+                    <a href="Dashboard.html">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="system.html">
+                        <span class="icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </span>
+                        <span class="title">System</span>
+                    </a>
+                </li>
+
+                                 <li>
+                      <a href="Analytics.html">
+                          <span class="icon">
+                              <ion-icon name="analytics-outline"></ion-icon>
+                          </span>
+                          <span class="title">Analytics</span>
+                      </a>
+                  </li>
+                <li>
+                    <a href="Messages.html">
+
+                        <span class="icon">
+                            <ion-icon name="chatbubble-outline"></ion-icon>
+                        </span>
+                        <span class="title">Messages</span>
+                    </a>
+                </li>
+
+                <li>
+             
+
+                <li>
+                    <a href="Settings.html">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Password.html">
+                        <span class="icon">
+                            <ion-icon name="lock-closed-outline"></ion-icon>
+                        </span>
+                        <span class="title">Password</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="index.html">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sign Out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+
+            <div class="topbar">
+              <div class="toggle">
+                <ion-icon name="menu-outline"></ion-icon>
+              </div>
+          
+              <div class="silo">
+                <span class="title">SMART SILO</span>
+              </div>
+          
+              <div class="user">
+                <img src="assets/imgs/customer001.jpg" alt="">
+              </div>
+            </div>
+          
+            <!-- ======================= Silos Sections ================== -->
+            <div id="siloContainer"></div>
+           
+
+
+          </div>
+          
+          
+    </div>
+
+    <!-- =========== Scripts =========  -->
+     <script>
+      
+     </script>
+     <script>
+      let offset=0;
+      const siloCharts = {};
+      function updateSiloChart(id, data) {
+  if (!data || !id) return;
+
+  const chart = siloCharts[id];
+  if (!chart) return;
+
+  // Add timestamp or count as the label
+  const timeLabel = new Date().toLocaleTimeString();
+
+    chart.data.labels.push(timeLabel);
+    chart.data.datasets[0].data.push(data.temperature);
+    chart.data.datasets[1].data.push(data.humidity);
+    chart.data.datasets[2].data.push(data.co2);
+    chart.data.datasets[3].data.push(data.level);
+
+    // Keep only the last 100 points
+    if (chart.data.labels.length > 10) {
+      chart.data.labels.shift();
+      chart.data.datasets.forEach(dataset => dataset.data.shift());
+    }
+
+    chart.update();
+}
+
+
+    function ADDSilo_to_view(id,container){
+
+    const section = document.createElement('section');
+    section.className = 'silo-section';
+    section.id = `${id}`;
+
+    section.innerHTML = `
+      <h2>Silo ${id}</h2>
+      <button class="emergencybtn" id="silo${id}EmergencyStop">Stop</button>
+      <span id="silo${id}EmergnsyStopStatus" class="EmergensyStopStatus">hello</span>
+      <div class="cardBox">
+        <div class="card">
+          <div>
+            <div class="numbers" id="silo${id}Temp"></div>
+            <div class="cardName">Temperature</div>
+          </div>
+          <div class="iconBx">
+            <ion-icon name="thermometer-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="card">
+          <div>
+            <div class="numbers" id="silo${id}Humidity"></div>
+            <div class="cardName">Humidity</div>
+          </div>
+          <div class="iconBx">
+            <ion-icon name="water-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="card">
+          <div>
+            <div class="numbers" id="silo${id}Level"></div>
+            <div class="cardName">Level</div>
+          </div>
+          <div class="iconBx">
+            <ion-icon name="beaker-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="card">
+          <div>
+            <div class="numbers" id="silo${id}CO2"></div>
+            <div class="cardName">CO2</div>
+          </div>
+          <div class="iconBx">
+            <ion-icon name="flame-outline"></ion-icon>
+          </div>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="chart-section">
+          <div class="cardHeader">
+            <h2>Graphe - Silo ${id}</h2>
+            <a href="Analytics.html?id=${id}" class="btn">View All</a>
+          </div>
+          <canvas id="silo${id}CombinedChart" width="510" height="255"></canvas>
+        </div>
+
+        <div class="image-section" id="silo${id}Image">
+          <div class="cardHeader">
+            <h2>Silo ${id}</h2>
+          </div>
+          <div class="image-center">
+            <img src="silo.jpg" alt="Silo ${id}">
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(section);
+    // === CHART INIT ===
+  const ctx = document.getElementById(`silo${id}CombinedChart`).getContext('2d');
+  siloCharts[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [], // timestamps or counts
+      datasets: [
+  { label: 'Temperature (°C)', borderColor: 'red', data: [], fill: false, tension: 0.4 },
+  { label: 'Humidity (%)', borderColor: 'blue', data: [], fill: false, tension: 0.4 },
+  { label: 'CO₂ (ppm)', borderColor: 'green', data: [], fill: false, tension: 0.4 },
+  { label: 'Level (%)', borderColor: 'orange', data: [], fill: false, tension: 0.4 }
+]
+
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Time'
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+      document.addEventListener('keydown', function (e) {
+        if (document.activeElement === document.body) { // Only if no input is focused
+          if (e.key === 'ArrowRight') {
+            offset++;
+            alert(offset)
+          }
+          if (e.key === 'ArrowLeft') {
+            offset--;
+            alert(offset)
+          }
+        }
+      });
+      function fetchMonthlyData(siloId, month, year) {
+  
+        socket.emit('SQLCommande', {
+    Commande: 'getSnr',
+    Paramtere: { siloId: siloId, from: '20-05-2025', to: '22-05-2025' }
+  });
+}
+
+      socket.on('silos', (silos_list) => {
+      const container = document.getElementById('siloContainer');
+      container.innerHTML = ''; // Clear existing silos once
+
+  silos_list.forEach((silo) => {
+
+    ADDSilo_to_view(silo,container)
+    
+  });
+});
+socket.on('silos_data', (dataArray) => {
+  if (!Array.isArray(dataArray)) return;
+
+  dataArray.forEach((silo) => {
+    const id = silo.id;
+    const status = silo.connectionStatus;
+    const sensor = silo.sensorStatus || {};
+    const prefix = `silo${id}`;
+
+    // Update sensor values if the elements exist
+    const tempEl = document.getElementById(`${prefix}Temp`);
+    const humidityEl = document.getElementById(`${prefix}Humidity`);
+    const levelEl = document.getElementById(`${prefix}Level`);
+    const co2El = document.getElementById(`${prefix}CO2`);
+    const imageEl = document.getElementById(`${prefix}Image`);
+    updateSiloChart(id, sensor);
+
+    console.log(status.connected)
+    if (tempEl) tempEl.textContent = sensor.temperature !== null ? `${sensor.temperature}°C` : 'N/A';
+    if (humidityEl) humidityEl.textContent = sensor.humidity !== null ? `${sensor.humidity}%` : 'N/A';
+    if (levelEl) levelEl.textContent = sensor.level !== null ? `${sensor.level}%` : 'N/A';
+    if (co2El) co2El.textContent = sensor.co2 !== null ? `${sensor.co2}%` : 'N/A';
+    if (imageEl){
+if (!status.connected) {
+  imageEl.style.filter = "sepia(1) hue-rotate(-50deg) saturate(5)";
+  imageEl.style.color = 'red';
+} else {
+  imageEl.removeAttribute("style");
+}
+
+    }
+    //fetchMonthlyData(id, null, null)
+
+  });
+  });
+
+/*socket.on('storedSensor_data', (data) => {
+  if (!data || !Array.isArray(data.data) || !data.id) return;
+
+  const chart = siloCharts[data.id];
+  if (!chart) return;
+
+  // Clear old data
+  chart.data.labels = [];
+  chart.data.datasets.forEach(ds => ds.data = []);
+
+  data.data.forEach(row => {
+    const timestamp = new Date(row.timestamp);
+    chart.data.labels.push(timestamp);
+    chart.data.datasets[0].data.push(row.temperature);
+    chart.data.datasets[1].data.push(row.humidity);
+    chart.data.datasets[2].data.push(row.co2);
+    chart.data.datasets[3].data.push(row.level);
+  });
+  if (chart.data.labels.length > 2) {
+    chart.data.labels.shift();
+    chart.data.datasets.forEach(dataset => dataset.data.shift());
+  }
+  chart.update();
+})*/
+
+window.onload = function () {
+    const params = new URLSearchParams(window.location.search);
+    const targetId = params.get("id");
+    if (!targetId) return;
+
+    function scrollIfFound() {
+      const el = document.getElementById(targetId);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+      else setTimeout(scrollIfFound, 200);
+    }
+
+    scrollIfFound();
+  };
+     </script>
+    <script src="assets/js/main.js"></script>
+
+    <!-- ====== ionicons ======= -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=favorite,home,search,settings" rel="stylesheet" />
+    
+
+<!-- Load React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Load scripts -->
+   <script type="module" src="assets/js/DataService.js"></script>
+<script src="assets/js/Notification.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/Dashboard.js"></script>
+
+
+    
+</body>
+
+</html>

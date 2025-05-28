@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART SILO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100&icon_names=favorite,home,search,settings" rel="stylesheet" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="notification.js"></script>
+    <!-- ======= Styles ====== -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+.silo-box {
+  background: var(--white);
+  padding: 25px 20px;
+  border-radius: 20px;
+  box-shadow: 0 7px 25px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  transition: all 0.8s ease;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+.silo-box:hover {
+  background: var(--green);
+  transform: translateY(-29px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.silo-box img {
+  max-width: 50%;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.silo-box .details {
+  display: none;
+  font-size: 14px;
+  color: #000000;
+  opacity: 0;
+  
+}
+
+.silo-box:hover .details {
+  display: block;
+  opacity: 1;
+}
+
+.silo-box .basic-info {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.status.connected {
+  color: green;
+}
+
+.status.disconnected {
+  color: red;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+}
+
+.silo-box:hover .delete-btn {
+  display: block;
+}
+    </style>
+</head>
+
+<body>
+     <!-- =============== Navigation ================ -->
+     <div class="container">
+        <div class="navigation">
+    
+          <ul>
+            <li>
+              <a href="#">
+                <span class="icon"><ion-icon name=""></ion-icon></span> 
+                <span class="title">Menu</span>
+              </a>
+            </li>
+  
+                  <li>
+                      <a href="Dashboard.html">
+                          <span class="icon">
+                              <ion-icon name="home-outline"></ion-icon>
+                          </span>
+                          <span class="title">Dashboard</span>
+                      </a>
+                  </li>
+  
+                  <li>
+                      <a href="system.html">
+                          <span class="icon">
+                              <ion-icon name="people-outline"></ion-icon>
+                          </span>
+                          <span class="title">System</span>
+                      </a>
+                  </li>
+  
+                                   <li>
+                      <a href="Analytics.html">
+                          <span class="icon">
+                              <ion-icon name="analytics-outline"></ion-icon>
+                          </span>
+                          <span class="title">Analytics</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="Messages.html">
+                          <span class="icon">
+                              <ion-icon name="chatbubble-outline"></ion-icon>
+                          </span>
+                          <span class="title">Messages</span>
+                      </a>
+                  </li>
+  
+  
+                  <li>
+                      <a href="Settings.html">
+                          <span class="icon">
+                              <ion-icon name="settings-outline"></ion-icon>
+                          </span>
+                          <span class="title">Settings</span>
+                      </a>
+                  </li>
+  
+                  <li>
+                      <a href="Password.html">
+                          <span class="icon">
+                              <ion-icon name="lock-closed-outline"></ion-icon>
+                          </span>
+                          <span class="title">Password</span>
+                      </a>
+                  </li>
+  
+                  <li>
+                      <a href="index.html">
+                          <span class="icon">
+                              <ion-icon name="log-out-outline"></ion-icon>
+                          </span>
+                          <span class="title">Sign Out</span>
+                      </a>
+                  </li>
+              </ul>
+          </div>
+  
+          <!-- ========================= Main ==================== -->
+          <div class="main">
+  
+            <div class="topbar">
+                  <div class="toggle">
+                      <ion-icon name="menu-outline"></ion-icon>
+                  </div>
+  
+               <!--    <div class="search">
+                      <label>
+                          <input type="text" placeholder="Search here">
+                          <ion-icon name="search-outline"></ion-icon>
+                      </label>
+                  </div>  -->
+  
+                  <div class="silo">
+                      <span class="title">SMART SILO</span>
+                   
+                  </div>
+  
+                  <div class="user">
+                      <img src="assets/imgs/customer001.jpg" alt="">
+                  </div>
+              </div> 
+
+              
+                <div class="help-container">
+                  <img src="sys.jpeg" alt="Help Image" />
+                  <!--<div class="silo-boxes">
+                    <a href="system.html#silo1" class="silo-box"> 
+                      <h3>SILO 1</h3>
+                      <div class="silo-image-wrapper">
+                        <img src="silo1.png" alt="Silo 1" />
+                      </div>
+                    </a>
+                  
+                    <a href="system.html#silo2" class="silo-box"> 
+                      <h3>SILO 2</h3>
+                      <div class="silo-image-wrapper">
+                        <img src="silo2.png" alt="Silo 2" />
+                      </div>
+                    </a>
+                  
+                    <a href="system.html#silo3" class="silo-box"> 
+                      <h3>SILO 3</h3>
+                      <div class="silo-image-wrapper">
+                        <img src="silo3.png" alt="Silo 3" />
+                      </div>
+                    </a>
+                  
+                    <a href="system.html#silo4" class="silo-box"> 
+                      <h3>SILO 4</h3>
+                      <div class="silo-image-wrapper">
+                        <img src="silo4.png" alt="Silo 4" />
+                      </div>
+                    </a>
+                  </div>
+                </div>-->
+                <div class="silo-boxes" id="silos-box">
+                </div>
+
+    <!-- =========== Scripts =========  -->
+     <script>
+function createSiloCard(id) {
+  return `
+    <div class="silo-box" id="silo-${id}" onclick="location.href='system.html?id=${id}'" style="cursor: pointer;">
+      <button class="delete-btn" onclick="event.stopPropagation(); socket.emit('delete_silo', '${id}')">&times;</button>
+      <img src="silo1.png" alt="Silo Image" />
+      <div class="basic-info">
+        <h2 id="silo_${id}">Silo ID: ${id}</h2>
+        <p><strong>Status:</strong> <span class="status" id="status_${id}"></span></p>
+      </div>
+      <div class="details">
+        <p><strong>Ping:<span id="ping_${id}">N/A</span></strong></p>
+        <p><strong>Temperature:</strong> <span id="temp_${id}">N/A</span>°C</p>
+        <p><strong>Humidity:</strong> <span id="hum_${id}">N/A</span>%</p>
+        <p><strong>CO₂:</strong> <span id="co2_${id}">N/A</span> ppm</p>
+        <p><strong>Evaluator:</strong> <span id="eval_${id}">N/A</span></p>
+        <p><strong>Vane:</strong> <span id="vane_${id}">N/A</span></p>
+      </div>
+    </div>
+  `;
+}
+
+
+function updateSilos(silos_list) {
+  const container = document.getElementById('silos-box');
+  container.innerHTML = ''; // 💡 Clear previous silos
+  silos_list.forEach(silo => {
+    
+
+    /*if (existingCard) {
+      console.log(existingCard)
+      // Update dynamic content
+      const statusElem = existingCard.querySelector('.status');
+      statusElem.textContent = client.connectionStatus.connected ? 'Connected' : 'Disconnected';
+      statusElem.className = `status ${statusClass}`;
+
+      existingCard.querySelector('p:nth-of-type(2)').innerHTML = `<strong>Ping:</strong> ${pingText}`;
+      existingCard.querySelector('p:nth-of-type(3)').innerHTML = `<strong>Temperature:</strong> ${client.sensorStatus.temperature ?? 'N/A'}°C`;
+      existingCard.querySelector('p:nth-of-type(4)').innerHTML = `<strong>Humidity:</strong> ${client.sensorStatus.humidity ?? 'N/A'}%`;
+      existingCard.querySelector('p:nth-of-type(5)').innerHTML = `<strong>CO₂:</strong> ${client.sensorStatus.co2 ?? 'N/A'} ppm`;
+      existingCard.querySelector('p:nth-of-type(6)').innerHTML = `<strong>Evaluator:</strong> ${client.actuatorStatus.evaluator ?? 'N/A'}`;
+      existingCard.querySelector('p:nth-of-type(7)').innerHTML = `<strong>Vane:</strong> ${client.actuatorStatus.vane ?? 'N/A'}`;
+    } else {*/
+      // Create new card
+      const cardHTML = createSiloCard(silo);
+      document.getElementById('silos-box').insertAdjacentHTML('beforeend', cardHTML);
+   // }
+  });
+}
+
+socket.on('silos', (silos_list) => {
+  updateSilos(silos_list);
+  console.log(silos_list)
+});
+socket.on('silos_data', (silos_data) => {
+  console.log(silos_data)
+  silos_data.forEach(data => {
+    const id = data.id;
+    const card = document.getElementById(`silo-${id}`);
+    if (!card) return;
+
+    const statusElem = document.getElementById(`status_${id}`);
+    const pingElem = document.getElementById(`ping_${id}`);
+    const tempElem = document.getElementById(`temp_${id}`);
+    const humElem = document.getElementById(`hum_${id}`);
+    const co2Elem = document.getElementById(`co2_${id}`);
+    const evalElem = document.getElementById(`eval_${id}`);
+    const vaneElem = document.getElementById(`vane_${id}`);
+
+    // Update values
+    const isConnected = data.connectionStatus?.connected;
+    statusElem.textContent = isConnected ? "Connected" : "Disconnected";
+    statusElem.className = `status ${isConnected ? "connected" : "disconnected"}`;
+
+    pingElem.textContent = data.connectionStatus?.ping ?? "N/A";
+    tempElem.textContent = data.sensorStatus?.temperature ?? "N/A";
+    humElem.textContent = data.sensorStatus?.humidity ?? "N/A";
+    co2Elem.textContent = data.sensorStatus?.co2 ?? "N/A";
+    evalElem.textContent = data.actuatorStatus?.evaluator ?? "N/A";
+    vaneElem.textContent = data.actuatorStatus?.vane ?? "N/A";
+  });
+});
+</script>
+
+    <script src="assets/js/main.js"></script>
+
+    <!-- ====== ionicons ======= -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=favorite,home,search,settings" rel="stylesheet" />
+    
+    
+
+    <!-- Load React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Load scripts -->
+   <script type="module" src="assets/js/DataService.js"></script>
+<script src="assets/js/Notification.js"></script>
+<script src="assets/js/main.js"></script>
+<!--<script src="assets/js/Dashboard.js"></script>-->
+
+</body>
+
+</html>

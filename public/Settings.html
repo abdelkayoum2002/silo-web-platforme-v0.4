@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100&icon_names=favorite,home,search,settings" rel="stylesheet" />
+
+    <!-- ======= Styles ====== -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+/* ==========Settings Tabs ========== */
+#settings-nav {
+  display: flex;
+  border-bottom: 1px solid #444;
+  margin-bottom: 10px;
+}
+
+#settings-nav button {
+  all: unset; /* Reset button styles */
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  color: #aaa;
+  cursor: pointer;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  margin-right: 2px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#settings-nav button:hover {
+  background-color: #2a2a2a;
+  color: #fff;
+}
+
+#settings-nav button.active {
+  background-color: #444; /* Light grey for active tab */
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ==========MQTT Settings ========== */
+#mqtt-settings {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+    margin: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#mqtt-settings h3, 
+#mqtt-settings h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+#mqtt-settings label {
+    display: block;
+    margin: 10px 0 5px;
+    color: #555;
+    font-weight: 600;
+}
+
+#mqtt-settings input,
+#mqtt-settings select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+#mqtt-settings input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
+#mqtt-settings button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+#mqtt-settings button:hover {
+    background-color: #0056b3;
+}
+
+.status-bar {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-connected {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* Topic List Table */
+
+
+#mqtt-settings th, 
+#mqtt-settings td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+#mqtt-settings th {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+#mqtt-settings td button {
+    background-color: #28a745;
+    margin-right: 5px;
+}
+
+#mqtt-settings td button:nth-child(2) {
+    background-color: #dc3545;
+}
+
+#mqtt-settings table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+</style>
+    <style>
+.silo-box {
+  background: var(--white);
+  padding: 25px 20px;
+  border-radius: 20px;
+  box-shadow: 0 7px 25px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  transition: all 0.8s ease;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+.silo-box:hover {
+  background: var(--green);
+  transform: translateY(-29px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.silo-box img {
+  max-width: 50%;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.silo-box .details {
+  display: none;
+  font-size: 14px;
+  color: #000000;
+  opacity: 0;
+  
+}
+
+.silo-box:hover .details {
+  display: block;
+  opacity: 1;
+}
+
+.silo-box .basic-info {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.status.connected {
+  color: green;
+}
+
+.status.disconnected {
+  color: red;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+}
+
+.silo-box:hover .delete-btn {
+  display: block;
+}
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="notification.js"></script>
+</head>
+
+<body>
+     <!-- =============== Navigation ================ -->
+     <div class="container">
+        <div class="navigation">
+    
+          <ul>
+            <li>
+              <a href="#">
+                <span class="icon"><ion-icon name=""></ion-icon></span> 
+                <span class="title">Menu</span>
+              </a>
+            </li>
+  
+                  <li>
+                      <a href="Dashboard.html">
+                          <span class="icon">
+                              <ion-icon name="home-outline"></ion-icon>
+                          </span>
+                          <span class="title">Dashboard</span>
+                      </a>
+                  </li>
+  
+                  <li>
+                      <a href="system.html">
+                          <span class="icon">
+                              <ion-icon name="people-outline"></ion-icon>
+                          </span>
+                          <span class="title">System</span>
+                      </a>
+                  </li>
+  
+                                   <li>
+                      <a href="Analytics.html">
+                          <span class="icon">
+                              <ion-icon name="analytics-outline"></ion-icon>
+                          </span>
+                          <span class="title">Analytics</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="Messages.html">
+                          <span class="icon">
+                              <ion-icon name="chatbubble-outline"></ion-icon>
+                          </span>
+                          <span class="title">Messages</span>
+                      </a>
+                  </li>
+  
+  
+                  <li>
+                      <a href="Settings.html">
+                          <span class="icon">
+                              <ion-icon name="settings-outline"></ion-icon>
+                          </span>
+                          <span class="title">Settings</span>
+                      </a>
+                  </li>
+  
+                  <li>
+                      <a href="Password.html">
+                          <span class="icon">
+                              <ion-icon name="lock-closed-outline"></ion-icon>
+                          </span>
+                          <span class="title">Password</span>
+                      </a>
+                  </li>
+  
+                  <li>
+                      <a href="index.html">
+                          <span class="icon">
+                              <ion-icon name="log-out-outline"></ion-icon>
+                          </span>
+                          <span class="title">Sign Out</span>
+                      </a>
+                  </li>
+              </ul>
+          </div>
+  
+          <!-- ========================= Main ==================== -->
+          <div class="main">
+  
+            <div class="topbar">
+                  <div class="toggle">
+                      <ion-icon name="menu-outline"></ion-icon>
+                  </div>
+
+               <!--    <div class="search">
+                      <label>
+                          <input type="text" placeholder="Search here">
+                          <ion-icon name="search-outline"></ion-icon>
+                      </label>
+                  </div>  -->
+
+                  <div class="silo">
+                      <span class="title">SMART SILO</span>
+                   
+                  </div>
+  
+                  <div class="user">
+                      <img src="assets/imgs/customer001.jpg" alt="">
+                  </div>
+            </div>
+
+            <div id="settings-nav" style="margin: 20px 0;">
+                <button class="active" onclick="showSection('mqtt-settings')">MQTT Settings</button>
+                <button onclick="showSection('clients-settings')">Clients</button>
+                <button onclick="showSection('silo-settings')">Silos</button>
+            </div>
+
+            <div id="mqtt-settings" style="display: block">
+                    <h3>MQTT Settings</h3>
+
+                    <label for="protocol">Protocol:</label>
+                    <select id="protocol" name="protocol">
+                        <option value="ws">ws://</option>
+                        <option value="wss">wss://</option>
+                        <option value="mqtt">mqtt://</option>
+                        <option value="mqtts">mqtts://</option>
+                    </select>
+                    <br>
+
+                    <label for="host">Host:</label>
+                    <input type="text" id="host" name="host" placeholder="e.g. broker.example.com">
+                    <br>
+
+                    <label for="port">Port:</label>
+                    <input type="number" id="port" name="port" placeholder="e.g. 1883">
+                    <br>
+
+                    <label for="path">Path (for ws/wss):</label>
+                    <input type="text" id="path" name="path" placeholder="e.g. /mqtt">
+                    <br>
+
+                    <label for="clientId">Client ID:</label>
+                    <input type="text" id="clientId" name="clientId" placeholder="e.g. client123">
+                    <br>
+
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username">
+                    <br>
+
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password">
+                    <br>
+
+                    <label for="keepalive">Keep Alive (seconds):</label>
+                    <input type="number" id="keepalive" name="keepalive" placeholder="e.g. 60">
+                    <br>
+
+                    <label for="cleanSession">Clean Session:</label>
+                    <input type="checkbox" id="cleanSession" name="cleanSession">
+                    <br>
+
+                    <label for="mqttVersion">MQTT Version:</label>
+                    <select id="mqttVersion" name="mqttVersion">
+                        <option value="3.1.1">3.1.1</option>
+                        <option value="5.0">5.0</option>
+                    </select>
+                    <br>
+
+                    <label for="reconnectPeriod">Reconnect Period (ms):</label>
+                    <input type="number" id="reconnectPeriod" name="reconnectPeriod" placeholder="e.g. 1000">
+                    <br>
+
+                    <label for="connectTimeout">Connect Timeout (ms):</label>
+                    <input type="number" id="connectTimeout" name="connectTimeout" placeholder="e.g. 30000">
+                    <br>
+
+                    <button id="connectBtn">Connect</button>
+                    <div id="statusBar" class="status-bar status-disconnected">Disconnected</div>
+                    <br>
+                    <h2>Subscribe to Topic</h2>
+
+                    <label>Type</label>
+                    <select id="topicType">
+                        <option value="EmergencyTopic">EmergencyTopic</option>
+                        <option value="AlertTopic">AlertTopic</option>
+                        <option value="MessageTopic">MessageTopic</option>
+                        <option value="CommandTopic">CommandTopic</option>
+                        <option value="SensorTopic">SensorTopic</option>
+                        <option value="StatusTopic">StatusTopic</option>
+                    </select>
+                    <label>Topic Name</label><input id="topicName" />
+                    <label>QoS</label><input id="topicQos" type="number" min="0" max="2" value="0" />
+                    <button id="addTopicBtn">Add Topic</button>
+                    <h2>Subscribed Topics</h2>
+                    <div id="topicList"></div>
+            </div> 
+
+            <div id="clients-settings" style="display:none">
+                <h2>Manage clients</h2>
+                <label>Username</label><input id="clientUSR"/>
+                <label>Password</label><input id="clientPASS" type="password"/>
+                <button id="addClientBtn">Add Client</button>
+            </div>
+
+            <div id="silo-settings" style="display:none">
+                <label for="siloID">siloId</label><input type="text" id="siloID" name="siloID" placeholder="Enter Silo ID">
+                <button id="addSiloBtn" onclick="socket.emit('add_silo', document.getElementById('siloID').value.trim())">Add Silo</button>               
+                <div class="silo-boxes" id="silos-box">
+                </div>
+            </div>                  
+         </div>
+     </div>
+<script>
+    function createSiloCard(id) {
+  return `
+    <div class="silo-box" id="silo-${id}" onclick="location.href='system.html?id=${id}'" style="cursor: pointer;">
+      <button class="delete-btn" onclick="event.stopPropagation(); socket.emit('delete_silo', '${id}')">&times;</button>
+      <img src="silo1.png" alt="Silo Image" />
+      <div class="basic-info">
+        <h2 id="silo_${id}">Silo ID: ${id}</h2>
+        <p><strong>Status:</strong> <span class="status" id="status_${id}"></span></p>
+      </div>
+      <div class="details">
+        <p><strong>Ping:<span id="ping_${id}">N/A</span></strong></p>
+        <p><strong>Temperature:</strong> <span id="temp_${id}">N/A</span>°C</p>
+        <p><strong>Humidity:</strong> <span id="hum_${id}">N/A</span>%</p>
+        <p><strong>CO₂:</strong> <span id="co2_${id}">N/A</span> ppm</p>
+        <p><strong>Evaluator:</strong> <span id="eval_${id}">N/A</span></p>
+        <p><strong>Vane:</strong> <span id="vane_${id}">N/A</span></p>
+      </div>
+    </div>
+  `;
+}
+
+
+function updateSilos(silos_list) {
+  const container = document.getElementById('silos-box');
+  container.innerHTML = ''; // 💡 Clear previous silos
+  silos_list.forEach(silo => {
+    
+
+    /*if (existingCard) {
+      console.log(existingCard)
+      // Update dynamic content
+      const statusElem = existingCard.querySelector('.status');
+      statusElem.textContent = client.connectionStatus.connected ? 'Connected' : 'Disconnected';
+      statusElem.className = `status ${statusClass}`;
+
+      existingCard.querySelector('p:nth-of-type(2)').innerHTML = `<strong>Ping:</strong> ${pingText}`;
+      existingCard.querySelector('p:nth-of-type(3)').innerHTML = `<strong>Temperature:</strong> ${client.sensorStatus.temperature ?? 'N/A'}°C`;
+      existingCard.querySelector('p:nth-of-type(4)').innerHTML = `<strong>Humidity:</strong> ${client.sensorStatus.humidity ?? 'N/A'}%`;
+      existingCard.querySelector('p:nth-of-type(5)').innerHTML = `<strong>CO₂:</strong> ${client.sensorStatus.co2 ?? 'N/A'} ppm`;
+      existingCard.querySelector('p:nth-of-type(6)').innerHTML = `<strong>Evaluator:</strong> ${client.actuatorStatus.evaluator ?? 'N/A'}`;
+      existingCard.querySelector('p:nth-of-type(7)').innerHTML = `<strong>Vane:</strong> ${client.actuatorStatus.vane ?? 'N/A'}`;
+    } else {*/
+      // Create new card
+      const cardHTML = createSiloCard(silo);
+      document.getElementById('silos-box').insertAdjacentHTML('beforeend', cardHTML);
+   // }
+  });
+}
+
+socket.on('silos', (silos_list) => {
+  updateSilos(silos_list)
+  console.log(silos_list)
+});
+socket.on('silos_data', (silos_data) => {
+  console.log(silos_data)
+  silos_data.forEach(data => {
+    const id = data.id;
+    const card = document.getElementById(`silo-${id}`);
+    if (!card) return;
+
+    const statusElem = document.getElementById(`status_${id}`);
+    const pingElem = document.getElementById(`ping_${id}`);
+    const tempElem = document.getElementById(`temp_${id}`);
+    const humElem = document.getElementById(`hum_${id}`);
+    const co2Elem = document.getElementById(`co2_${id}`);
+    const evalElem = document.getElementById(`eval_${id}`);
+    const vaneElem = document.getElementById(`vane_${id}`);
+
+    // Update values
+    const isConnected = data.connectionStatus?.connected;
+    statusElem.textContent = isConnected ? "Connected" : "Disconnected";
+    statusElem.className = `status ${isConnected ? "connected" : "disconnected"}`;
+
+    pingElem.textContent = data.connectionStatus?.ping ?? "N/A";
+    tempElem.textContent = data.sensorStatus?.temperature ?? "N/A";
+    humElem.textContent = data.sensorStatus?.humidity ?? "N/A";
+    co2Elem.textContent = data.sensorStatus?.co2 ?? "N/A";
+    evalElem.textContent = data.actuatorStatus?.evaluator ?? "N/A";
+    vaneElem.textContent = data.actuatorStatus?.vane ?? "N/A";
+  });
+});
+</script>
+<script>
+    function showSection(sectionId) {
+        const sections = ['mqtt-settings', 'clients-settings', 'silo-settings'];
+        const buttons = document.querySelectorAll('#settings-nav button');
+
+        // Show/hide sections
+        sections.forEach(id => {
+            document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
+        });
+
+        // Update active button styles
+        buttons.forEach(button => {
+            button.classList.remove('active');
+        });
+
+        const activeButton = Array.from(buttons).find(btn =>
+            btn.getAttribute('onclick').includes(sectionId)
+        );
+        if (activeButton) {
+            activeButton.classList.add('active');
+        }
+    }
+
+    function updateTopics(topics) {
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Topic</th>
+            <th>QoS</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead><tbody>`;
+
+      for (const [type, topicArray] of Object.entries(topics)) {
+        topicArray.forEach(({ topic, qos, status }) => {
+          html += `<tr>
+            <td>${type}</td>
+            <td>${topic}</td>
+            <td>${qos}</td>
+            <td>${status}</td>
+            <td>
+              ${status === 'subscribe'
+                                ? `<button onclick="socket.emit('unsubscribe', '${topic}')">Unsubscribe</button>`
+                                : `<button onclick="socket.emit('subscribe', {type: '${type}', topic: '${topic}', qos: ${qos}})">Subscribe</button>`}
+              <button onclick="socket.emit('deleteTopic', '${topic}')">Delete</button>
+            </td>
+          </tr>`;
+        });
+      }
+
+      html += `</tbody></table>`;
+      topicListDiv.innerHTML = html;
+    }
+</script>
+<script>
+    const connectBtn = document.getElementById('connectBtn');
+    const statusBar = document.getElementById('statusBar');
+    const addTopicBtn = document.getElementById('addTopicBtn');
+    const topicListDiv = document.getElementById('topicList');
+
+    const protocol = document.getElementById("protocol");
+    const host = document.getElementById("host");
+    const port = document.getElementById("port");
+    const path = document.getElementById("path");
+
+    const clientId = document.getElementById("clientId");
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+    const keepalive = document.getElementById("keepalive");
+    const clean = document.getElementById("cleanSession");
+    const mqttVersion = document.getElementById("mqttVersion");
+    const reconnectPeriod = document.getElementById("reconnectPeriod");
+    const connectTimeout = document.getElementById("connectTimeout");
+
+    let connected = false;
+
+    protocol.addEventListener("change", () => {
+        path.style.display = (protocol.value === "ws" || protocol.value === "wss") ? 'block' : 'none';
+    });
+
+    connectBtn.addEventListener("click", function () {
+        if(connected){socket.emit('mqtt_disconnect'); return;}
+        // Construct broker URL
+        let brokerURL = `${protocol.value}://${host.value}:${port.value}${(protocol.value === "ws" || protocol.value === "wss") ? '/'+ path.value : ''}`;
+        // Build options object
+        const options = {
+            clientId: clientId.value,
+            username: username.value,
+            password: password.value,
+            keepalive: parseInt(keepalive.value) || 60,
+            clean: clean.checked,
+            reconnectPeriod: parseInt(reconnectPeriod.value) || 1000,
+            connectTimeout: parseInt(connectTimeout.value) || 3000,
+            protocolVersion: mqttVersion.value === "5.0" ? 5 : 4
+        };
+        const configuration = {
+            url:brokerURL,
+            options
+        }       
+        socket.emit('mqtt_connect', configuration);
+        // Output for debug or usage with mqtt.js
+        console.log("Broker URL:", brokerURL);
+        console.log("MQTT Options:", options);
+
+        // You can now use this with mqtt.js like this:
+        // const client = mqtt.connect(brokerURL, options);
+    });
+
+    addTopicBtn.addEventListener("click", function () {
+      const type = document.getElementById('topicType').value;
+      const topic = document.getElementById('topicName').value.trim();
+      const qos = parseInt(document.getElementById('topicQos').value);
+      socket.emit('subscribe', { type, topic, qos });
+    });
+
+    socket.on('configuration', (config) => {
+        const { url, options } = config;
+
+        try {
+            const parsedUrl = new URL(url);
+
+            // Set protocol, host, port, and path
+            protocol.value = parsedUrl.protocol.replace(':', ''); // e.g., "ws" from "ws:"
+            host.value = parsedUrl.hostname;
+            port.value = parsedUrl.port;
+            path.value = parsedUrl.pathname !== '/' ? parsedUrl.pathname : '';
+
+            // Fill options into the form
+            if (options.clientId) clientId.value = options.clientId;
+            if (options.username) username.value = options.username;
+            if (options.password) password.value = options.password;
+            if (options.keepalive !== undefined) keepalive.value = options.keepalive;
+            if (options.clean !== undefined) clean.checked = options.clean;
+            if (options.protocolVersion) mqttVersion.value = options.protocolVersion === 5 ? "5.0" : "3.1.1";
+            if (options.reconnectPeriod !== undefined) reconnectPeriod.value = options.reconnectPeriod;
+            if (options.connectTimeout !== undefined) connectTimeout.value = options.connectTimeout;
+
+        } catch (err) {
+            console.error("Invalid MQTT URL format:", url, err);
+        }
+    });
+
+    socket.on('mqtt_status', (status) => {
+        console.log('MQTT status:', status);
+        statusBar.innerText=status;
+        connected = status === 'connected';
+        connectBtn.textContent = connected ? 'Disconnect' : 'Connect';
+        /*if (connected) {
+            document.getElementById("mqtt-settings").querySelectorAll("input, select").forEach(el => el.disabled = true);
+        } else {
+            document.getElementById("mqtt-settings").querySelectorAll("input, select").forEach(el => el.disabled = false);
+        }*/
+
+    });
+    
+    socket.on('topics', (topics) => {
+        updateTopics(topics);
+    });
+</script>
+
+              
+                
+
+    <!-- =========== Scripts =========  -->
+    <script src="assets/js/main.js"></script>
+
+    <!-- ====== ionicons ======= -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=favorite,home,search,settings" rel="stylesheet" />
+    
+    
+
+    <!-- Load React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Load scripts -->
+   <script type="module" src="assets/js/DataService.js"></script>
+<script src="assets/js/Notification.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/Dashboard.js"></script>
+
+</body>
+
+</html>

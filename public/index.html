@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Form</title>
+  <link rel="stylesheet" href="styles1.css">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <!-- React 18 -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    function LoginForm() {
+      const [error, setError] = React.useState('');
+      const [rememberMe, setRememberMe] = React.useState(false);
+      
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const username = e.target.username.value.trim().toLowerCase();
+        const password = e.target.password.value;
+
+        if (username === "admin" && password === "admin") {
+          localStorage.setItem("username", "admin");
+          localStorage.setItem("rememberMe", rememberMe);
+          window.location.href = "dashboard.html";
+        } else {
+          setError("Invalid username or password.");
+        }
+      };
+
+      React.useEffect(() => {
+        if (localStorage.getItem("rememberMe") === "true") {
+          setRememberMe(true);
+        }
+      }, []);
+
+      return (
+        <div className="wrapper">
+          <form onSubmit={handleSubmit}>
+            <h1>Login</h1>
+            <div className="input-box">
+              <input type="text" name="username" placeholder="Username" required />
+              <i className='bx bxs-user'></i>
+            </div>
+            <div className="input-box">
+              <input type="password" name="password" placeholder="Password" required />
+              <i className='bx bxs-lock-alt'></i>
+            </div>
+            <div className="remember-forgot">
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                Remember Me
+              </label>
+              <a href="#">Forgot Password</a>
+            </div>
+            <button type="submit" className="btn">Login</button>
+            {error && <p className="error-message">{error}</p>}
+          </form>
+        </div>
+      );
+    }
+
+   
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<LoginForm />);
+  </script>
+</body>
+</html>

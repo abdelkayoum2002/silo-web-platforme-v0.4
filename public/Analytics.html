@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART SILO</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="notification.js"></script>
+    <!-- ======= Styles ====== -->
+     <link rel="stylesheet" href="assets/css/style.css">
+     <style>
+      #scale {
+  vertical-align: middle;
+  margin-left: 8px;
+  cursor: pointer;
+  width: 120px;
+}
+
+#scaleLabel {
+  margin-left: 6px;
+  font-weight: 700;
+  color: #555;
+}
+
+#siloSelect {
+  margin-left: 20px;
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1.5px solid #ccc;
+  cursor: pointer;
+  min-width: 150px;
+  transition: border-color 0.3s ease;
+}
+
+#siloSelect:hover,
+#siloSelect:focus {
+  border-color: #21853a;
+  outline: none;
+}
+
+#timeWindowDisplay {
+  margin: 12px 0 20px 0;
+  font-size: 16px;
+  color: #444;
+}
+
+#Chart {
+  display: block;
+  max-width: 100%;
+  height: 320px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: inset 0 0 8px #e0e0e0;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background-color: #21853a;
+  color: white !important;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #17682b;
+}
+     </style>
+</head>
+
+
+<body>
+    <!-- =============== Navigation ================ -->
+    <div class="container">
+      <div class="navigation">
+  
+        <ul>
+          <li>
+            <a href="#">
+              <span class="icon"><ion-icon name=""></ion-icon></span> 
+              <span class="title">Menu</span>
+            </a>
+          </li>
+
+                <li>
+                    <a href="dashboard.html">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="system.html">
+                        <span class="icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </span>
+                        <span class="title">System</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Messages.html">
+                        <span class="icon">
+                            <ion-icon name="chatbubble-outline"></ion-icon>
+                        </span>
+                        <span class="title">Messages</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Analytics.html">
+                        <span class="icon">
+                            <ion-icon name="analytics-outline"></ion-icon>
+                        </span>
+                        <span class="title">Analytics</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Settings.html">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Password.html">
+                        <span class="icon">
+                            <ion-icon name="lock-closed-outline"></ion-icon>
+                        </span>
+                        <span class="title">Password</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="index.html">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sign Out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ========================= Main ==================== -->
+        <div class="main">
+
+          <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+
+             <!--    <div class="search">
+                    <label>
+                        <input type="text" placeholder="Search here">
+                        <ion-icon name="search-outline"></ion-icon>
+                    </label>
+                </div>  -->
+
+                <div class="silo">
+                    <span class="title">SMART SILO</span>
+                 
+                </div>
+
+                <div class="user">
+                    <img src="assets/imgs/customer001.jpg" alt="">
+                </div>
+            </div> 
+
+             <div class="analytics-container">
+    <h1 style="text-align: center; color: #21853a; margin-bottom: 30px;" id="siloId"></h1>
+
+      <div class="chart-container">
+        <button id="prev">← Prev</button>
+        <button id="next">Next →</button>
+        <label for="scale">Scale: <span id="scaleLabel">10s</span></label>
+        <input type="range" id="scale" min="1" max="5" step="1" value="1">
+
+        <select id="siloSelect"></select>
+        <div id="timeWindowDisplay" style="text-align: center; font-weight: bold; margin: 10px 0;"></div>
+
+        <canvas id="Chart"></canvas>
+      </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="system.html" class="btn" style="padding: 10px 20px; background-color: #21853a; color: white; border-radius: 8px; text-decoration: none;" id="btn">⟵ Back to the system</a>
+    </div>
+  </div>
+
+
+    
+  </div>
+<script>//aditional fct
+    function toSQLDateTime(isoString) {
+      const date = new Date(isoString);
+      const pad = (n) => n.toString().padStart(2, '0');
+
+      const year = date.getFullYear();
+      const month = pad(date.getMonth() + 1);
+      const day = pad(date.getDate());
+      const hours = pad(date.getHours());
+      const minutes = pad(date.getMinutes());
+      const seconds = pad(date.getSeconds());
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+  </script>
+ <script>
+const scaleMap = {
+  1: { label: "10s", window: 10 * 1000, step: 1 * 1000, unit: 'second', format: 'HH:mm:ss' },
+  2: { label: "1min", window: 60 * 1000, step: 10 * 1000, unit: 'minute', format: 'HH:mm' },
+  3: { label: "1h", window: 3600 * 1000, step: 600 * 1000, unit: 'hour', format: 'HH:mm' },
+  4: { label: "12h", window: 43200 * 1000, step: 3600 * 1000, unit: 'hour', format: 'MMM dd HH:mm' },
+  5: { label: "1 day", window: 86400 * 1000, step: 18000 * 1000, unit: 'day', format: 'MMM dd' }
+};
+
+  let WINDOW_SIZE;
+  let STEP_SIZE;
+  let chartData;
+  let startTime;
+  let endTime;
+  let currentTime;
+  let navpos=0;
+  let navMax,navMin;
+  let direction;
+  let temp=0;
+
+function updateTimeWindowDisplay() {
+  const scaleValue = parseInt(document.getElementById('scale').value);
+  const settings = scaleMap[scaleValue];
+
+  let labelFormat;
+  switch (scaleValue) {
+    case 1: labelFormat = 'HH:mm:ss'; break;
+    case 2: labelFormat = 'HH:mm'; break;
+    case 3: labelFormat = 'HH:mm'; break;
+    case 4: labelFormat = 'MMM d, HH:mm'; break;
+    case 5: labelFormat = 'yyyy-MM-dd'; break;
+    default: labelFormat = 'HH:mm:ss';
+  }
+
+  // Set new format for X-axis tick labels
+  myChart.options.scales.x.time.tooltipFormat = labelFormat;
+  myChart.options.scales.x.time.displayFormats = { second: labelFormat, minute: labelFormat, hour: labelFormat, day: labelFormat };
+
+  // Show visible time range outside chart
+  const minTime = new Date(myChart.options.scales.x.min);
+  const maxTime = new Date(myChart.options.scales.x.max);
+  const formatter = new Intl.DateTimeFormat('default', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: (scaleValue <= 1) ? '2-digit' : undefined
+  });
+  document.getElementById('timeWindowDisplay').textContent =
+    `From: ${formatter.format(minTime)}  To: ${formatter.format(maxTime)}`;
+}
+
+
+
+  function chartInit(id){
+    document.getElementById('siloId').innerHTML = `Analytics - Silo ${id} - Real Time`;
+    document.getElementById('btn').href = `system.html?id=${id}`;
+    document.getElementById('siloSelect').value=id;
+    WINDOW_SIZE = 10000 //10s
+    STEP_SIZE = 5000 //5s
+    chartData = []; // Global array for all loaded data
+    socket.emit('SQLCommande', {Commande: 'getallSnr',Paramtere: {siloId: id}});
+  }
+
+  function updateChartData(raw){
+    chartData=raw;
+    // Update datasets
+    myChart.data.datasets[0].data = chartData.map(p => ({ x: new Date(p.timestamp), y: p.temperature }));
+    myChart.data.datasets[1].data = chartData.map(p => ({ x: new Date(p.timestamp), y: p.humidity }));
+    myChart.data.datasets[2].data = chartData.map(p => ({ x: new Date(p.timestamp), y: p.co2 }));
+    myChart.data.datasets[3].data = chartData.map(p => ({ x: new Date(p.timestamp), y: p.level }));
+    startTime=new Date(chartData[chartData.length-1].timestamp);
+    endTime=new Date(chartData[0].timestamp);
+    currentTime=new Date(endTime.getTime() - WINDOW_SIZE);
+    myChart.options.scales.x.min = currentTime.toISOString();
+    myChart.options.scales.x.max = endTime.toISOString();
+    myChart.update();
+    updateTimeWindowDisplay();
+  }
+
+  function scrollLeft() {
+  let newStart = new Date(currentTime.getTime() - STEP_SIZE);
+  if (newStart.getTime() < startTime.getTime()) {
+    newStart = new Date(startTime.getTime());
+  }
+
+  let newEnd = new Date(newStart.getTime() + WINDOW_SIZE);
+
+  // Avoid going beyond the end
+  if (newEnd.getTime() > endTime.getTime()) {
+    newEnd = new Date(endTime.getTime());
+    newStart = new Date(endTime.getTime() - WINDOW_SIZE);
+  }
+
+  currentTime = newStart;
+
+  myChart.options.scales.x.min = newStart.toISOString();
+  myChart.options.scales.x.max = newEnd.toISOString();
+  myChart.update();
+  updateTimeWindowDisplay();
+}
+
+  function scrollRight(){
+    currentTime = new Date(currentTime.getTime() + STEP_SIZE);
+    let newEnd = new Date(currentTime.getTime() + WINDOW_SIZE);
+    if(newEnd.getTime()>=endTime.getTime()){
+      newEnd=endTime;
+      currentTime=new Date(endTime.getTime() - WINDOW_SIZE);
+    }
+    myChart.options.scales.x.min = currentTime.toISOString();
+    myChart.options.scales.x.max = newEnd.toISOString();
+    myChart.update();
+    updateTimeWindowDisplay();
+  }
+  function updateScale() {
+  const scaleValue = parseInt(document.getElementById('scale').value);
+  const settings = scaleMap[scaleValue];
+
+  // Compute middle of current view
+  const middle = new Date(currentTime.getTime() + WINDOW_SIZE / 2);
+
+  // Update global settings
+  WINDOW_SIZE = settings.window;
+  STEP_SIZE = settings.step;
+  document.getElementById('scaleLabel').textContent = settings.label;
+
+  // Update chart time format dynamically
+  myChart.options.scales.x.time.unit = settings.unit;
+  myChart.options.scales.x.time.tooltipFormat = settings.format;
+
+  if (endTime && chartData.length > 0) {
+    const minT = new Date(middle.getTime() - WINDOW_SIZE / 2);
+    const maxT = new Date(middle.getTime() + WINDOW_SIZE / 2);
+    currentTime = minT;
+
+    myChart.options.scales.x.min = minT.toISOString();
+    myChart.options.scales.x.max = maxT.toISOString();
+    myChart.update();
+
+    // Optional: Show time range label above the chart
+    const rangeLabel = `${minT.toLocaleString()} - ${maxT.toLocaleString()}`;
+    document.getElementById('timeRangeLabel').textContent = `Window: ${rangeLabel}`;
+  }
+}
+
+
+ </script>
+ <script>
+  const params = new URLSearchParams(window.location.search);
+  let id = params.get('id');
+  const ctx = document.getElementById('Chart').getContext('2d');
+  const myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+      datasets: [
+        {
+          label: 'Temperature (°C)',
+          data: [],
+          borderColor: 'red',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        },
+        {
+          label: 'Humidity (%)',
+          data: [],
+          borderColor: 'blue',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        },
+        {
+          label: 'CO2 (g/L)',
+          data: [],
+          borderColor: 'green',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        },
+        {
+          label: 'Level (%)',
+          data: [],
+          borderColor: 'orange',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        }
+      ]
+      },
+      options: {
+        animation: false,
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              unit: 'second',
+              tooltipFormat: 'HH:mm:ss'
+            },
+            ticks: { source: 'auto' },
+          },
+          y: {
+            title: { display: true, text: 'Value' },
+            min:undefined,
+            max:undefined
+          }
+        }
+      }
+    });
+ </script>
+ <script>
+  socket.on('silos' ,(silos_list) =>{
+    console.log(silos_list)
+    document.getElementById('siloSelect').innerHTML = '';
+    silos_list.forEach(silo => {
+      const option = document.createElement('option');
+      option.value = silo;
+      option.textContent = silo;
+      document.getElementById('siloSelect').appendChild(option);
+    });
+    if(!id){
+      id=silos_list[0];
+    }
+    if(id!==undefined){
+      chartInit(id);
+    }
+    else{
+      document.getElementById('siloId').innerHTML=`Analytics (no silos here)`;
+    }
+  })
+  
+  socket.on('storedSensor_data', (data) => {
+    console.log(data.data)
+    const raw = data.data;
+    updateChartData(data.data);
+  })
+  
+  document.getElementById('siloSelect').addEventListener('change', () => {
+    id = document.getElementById('siloSelect').value;
+    chartInit(id);
+  });
+
+  document.getElementById('prev').addEventListener('click', () => {
+    scrollLeft();
+  })
+  document.getElementById('next').addEventListener('click', () => {
+    scrollRight();
+  })
+  document.getElementById('scale').addEventListener('input', () => {
+    updateScale();
+  });
+ </script>
+ <script>
+    document.getElementById('Chart').addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      // Scrolled up → go left
+      scrollLeft();
+    } else {
+      // Scrolled down → go right
+      scrollRight();
+    }
+  });
+ </script>
+ <!-- =========== Scripts =========  -->
+ <!-- <script src="assets/js/analytic.js"></script> -->
+ <script src="assets/js/main.js"></script>
+
+ <!-- ====== ionicons ======= -->
+ <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+ <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+
+ <!-- Load React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Load scripts -->
+<script type="module" src="assets/js/DataService.js"></script>
+<script src="assets/js/Notification.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/Dashboard.js"></script>
+ 
+</body>
+
+</html> 

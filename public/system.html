@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART SILO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100&icon_names=favorite,home,search,settings" rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="notification.js"></script>
+
+    <!-- ======= Styles ====== -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+      .Refrence {
+  font-size: 1rem;
+  color: var(--black2);
+  min-width: 30px;
+}
+
+    </style>
+</head>
+<body>
+    <!-- =============== Navigation ================ -->
+    <div class="container">
+      <div class="navigation">
+  
+        <ul>
+          <li>
+            <a href="#">
+              <span class="icon"><ion-icon name=""></ion-icon></span> 
+              <span class="title">Menu</span>
+            </a>
+          </li>
+
+                <li>
+                    <a href="Dashboard.html">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="system.html">
+                        <span class="icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </span>
+                        <span class="title">System</span>
+                    </a>
+                </li>
+
+                                 <li>
+                      <a href="Analytics.html">
+                          <span class="icon">
+                              <ion-icon name="analytics-outline"></ion-icon>
+                          </span>
+                          <span class="title">Analytics</span>
+                      </a>
+                  </li>
+                <li>
+                    <a href="Messages.html">
+
+                        <span class="icon">
+                            <ion-icon name="chatbubble-outline"></ion-icon>
+                        </span>
+                        <span class="title">Messages</span>
+                    </a>
+                </li>
+
+                <li>
+             
+
+                <li>
+                    <a href="Settings.html">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Password.html">
+                        <span class="icon">
+                            <ion-icon name="lock-closed-outline"></ion-icon>
+                        </span>
+                        <span class="title">Password</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="index.html">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sign Out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main">
+
+            <div class="topbar">
+              <div class="toggle">
+                <ion-icon name="menu-outline"></ion-icon>
+              </div>
+          
+              <div class="silo">
+                <span class="title">SMART SILO</span>
+              </div>
+          
+              <div class="user">
+                <img src="assets/imgs/customer001.jpg" alt="">
+              </div>
+            </div>
+          
+            <!-- ======================= Silos Sections ================== -->
+            <div id="siloContainer"></div>
+           
+
+          </div>
+          
+        
+    </div>
+    <!-- =========== Scripts =========  -->
+<script>
+const siloCharts = {};
+let silos=[];
+function ADDSilo_to_view(id,container){
+    const silo = silos.find(silo => silo.id === id);
+    const section = document.createElement('section');
+    section.className = 'silo-section';
+    section.id = `${id}`;
+
+   section.innerHTML = `
+  <h2>Silo ${id}</h2>
+
+  <!-- Global Silo Status -->
+  <div class="global-status">
+    <span id="silo${id}Status" class="status-indicator online">Online</span>
+    <span class="last-update">Last Update: <span id="silo${id}LastUpdate">--:--:--</span></span>
+  </div>
+
+  <!-- Emergency Stop -->
+  <div class="emergency-section">
+    <span id="silo${id}EmergencyStopStatus" class="emergency-status" style="display:none"></span>
+    <button class="emergencybtn" id="silo${id}EmergencyStop">EMERGENCY STOP</button>
+  </div>
+
+  <!-- Current Operation Status -->
+  <div class="operation-status">
+    <h3>Current Action</h3>
+    <p>Action: <span id="silo${id}ActionStatus">Idle</span></p>
+    <p>Cooling: <span id="silo${id}CoolingStatus">Inactive</span></p>
+    <p>Drying: <span id="silo${id}DryingStatus">Inactive</span></p>
+  </div>
+
+  <!-- Optional Action Controls (if needed) -->
+  <div class="action-controls">
+    <button id="silo${id}StartFilling" style="backgroundColor:'red'">Filling</button>
+    <button id="silo${id}StartEmptying">Emptying</button>
+  </div>
+
+  <!-- Sensor Cards -->
+  <!-- Sensor Cards -->
+<div class="cardBox">
+  <div class="card">
+    <div>
+      <div id="silo${id}TempChanger" style="display: none;">
+        <button class="btn" id="silo${id}Tempbtn" style="display: inline;">Cancel</button>
+        <input class="numberInput" type="number" id="silo${id}TempInput"> 
+      </div>
+      <div class="Refrence" id="silo${id}TempRefrence">--</div>
+      <div class="numbers" id="silo${id}Temp">--</div>
+      <div class="cardName">Temperature (°C)</div>
+    </div>
+    <div class="iconBx" id="silo${id}TempIcon"><ion-icon name="thermometer-outline"></ion-icon></div>
+  </div>
+
+  <div class="card">
+    <div>
+      <div id="silo${id}HumidityChanger" style="display: none;">
+        <input class="numberInput" type="number" id="silo${id}HumidityInput"> 
+        <button class="btn" id="silo${id}Humiditybtn" style="display: inline;">Cancel</button>
+      </div>
+      <div class="Refrence" id="silo${id}HumidityRefrence">--</div>
+      <div class="numbers" id="silo${id}Humidity">--</div>
+      <div class="cardName">Humidity (%)</div>
+    </div>
+    <div class="iconBx" id="silo${id}HumidityIcon"><ion-icon name="water-outline"></ion-icon></div>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="numbers" id="silo${id}Level">--</div>
+      <div class="cardName">Level (%)</div>
+    </div>
+    <div class="iconBx"><ion-icon name="beaker-outline"></ion-icon></div>
+  </div>
+
+  <div class="card">
+    <div>
+      <div id="silo${id}CO2Changer" style="display: none;">
+        <input class="numberInput" type="number" id="silo${id}CO2Input"> 
+        <button class="btn" id="silo${id}CO2btn" style="display: inline;">Cancel</button>
+      </div>
+      <div class="Refrence" id="silo${id}CO2Refrence">--</div>
+      <div class="numbers" id="silo${id}CO2">--</div>
+      <div class="cardName">CO₂ (ppm)</div>
+    </div>
+    <div class="iconBx" id="silo${id}CO2Icon"><ion-icon name="flame-outline"></ion-icon></div>
+  </div>
+</div>
+
+
+  <!-- Chart and Image -->
+  <div class="details">
+    <div class="chart-section">
+      <div class="cardHeader">
+        <h2>Chart - Silo ${id}</h2>
+        <a href="Analytics.html?id=${id}" class="btn">View All</a>
+      </div>
+      <canvas id="silo${id}CombinedChart" width="510" height="255"></canvas>
+    </div>
+
+    <div class="image-section" id="silo${id}Image">
+      <div class="cardHeader">
+        <h2>Silo ${id}</h2>
+      </div>
+      <div class="image-center">
+        <img src="silo.jpg" alt="Silo ${id}">
+      </div>
+    </div>
+  </div>
+`;
+
+
+
+  container.appendChild(section);
+    // === CHART INIT ===
+  const ctx = document.getElementById(`silo${id}CombinedChart`).getContext('2d');
+  siloCharts[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [], // timestamps or counts
+      datasets: [
+  { label: 'Temperature (°C)', borderColor: 'red', data: [], fill: false, tension: 0.4 },
+  { label: 'Humidity (%)', borderColor: 'blue', data: [], fill: false, tension: 0.4 },
+  { label: 'CO₂ (ppm)', borderColor: 'green', data: [], fill: false, tension: 0.4 },
+  { label: 'Level (%)', borderColor: 'orange', data: [], fill: false, tension: 0.4 }
+]
+
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Time'
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+   // === Events INIT ===
+  document.getElementById(`silo${id}EmergencyStop`).addEventListener('click', () => EmergencyStop(id));
+
+  document.getElementById(`silo${id}HumidityIcon`).addEventListener('click', () => {
+    const changer = document.getElementById(`silo${id}HumidityChanger`);
+    const display = document.getElementById(`silo${id}Humidity`);
+    const input = document.getElementById(`silo${id}HumidityInput`);
+    const cmd = 'Humidity';
+
+    const isChangerVisible = changer.style.display === 'block';
+
+    if (isChangerVisible) {
+      // Switching back to display mode – send command
+      const value = Number(input.value);
+      if(value){
+      SendCommand(id, cmd, value);}
+    }
+
+    // Toggle visibility
+    changer.style.display = isChangerVisible ? 'none' : 'block';
+    display.style.display = isChangerVisible ? 'block' : 'none';
+  });
+
+  document.getElementById(`silo${id}Humiditybtn`).addEventListener('click', () =>{
+    const changer = document.getElementById(`silo${id}HumidityChanger`);
+    const display = document.getElementById(`silo${id}Humidity`);
+    changer.style.display = 'none';
+    display.style.display = 'block';
+  });
+
+  document.getElementById(`silo${id}TempIcon`).addEventListener('click', () => {
+    const changer = document.getElementById(`silo${id}TempChanger`);
+    const display = document.getElementById(`silo${id}Temp`);
+    const input = document.getElementById(`silo${id}TempInput`);
+    const cmd = 'Temp';
+
+    const isChangerVisible = changer.style.display === 'block';
+
+    if (isChangerVisible) {
+      // Switching back to display mode – send command
+      const value = Number(input.value);
+      if(value){
+      SendCommand(id, cmd, value);}
+    }
+
+    // Toggle visibility
+    changer.style.display = isChangerVisible ? 'none' : 'block';
+    display.style.display = isChangerVisible ? 'block' : 'none';
+  });
+
+  document.getElementById(`silo${id}Tempbtn`).addEventListener('click', () =>{
+    const changer = document.getElementById(`silo${id}TempChanger`);
+    const display = document.getElementById(`silo${id}Temp`);
+    changer.style.display = 'none';
+    display.style.display = 'block';
+  });
+
+  document.getElementById(`silo${id}CO2Icon`).addEventListener('click', () => {
+    const changer = document.getElementById(`silo${id}CO2Changer`);
+    const display = document.getElementById(`silo${id}CO2`);
+    const input = document.getElementById(`silo${id}CO2Input`);
+    const cmd = 'CO2';
+
+    const isChangerVisible = changer.style.display === 'block';
+
+    if (isChangerVisible) {
+      // Switching back to display mode – send command
+      const value = Number(input.value);
+      if(value){
+      SendCommand(id, cmd, value);}
+    }
+
+    // Toggle visibility
+    changer.style.display = isChangerVisible ? 'none' : 'block';
+    display.style.display = isChangerVisible ? 'block' : 'none';
+  });
+
+  document.getElementById(`silo${id}CO2btn`).addEventListener('click', () =>{
+    const changer = document.getElementById(`silo${id}CO2Changer`);
+    const display = document.getElementById(`silo${id}CO2`);
+    changer.style.display = 'none';
+    display.style.display = 'block';
+  });
+
+  
+
+
+
+}
+
+
+const chartDataBuffers = {}; // Stores data points for each chart
+
+function updateSiloChart(id, data) {
+  if (!data || !id) return;
+
+  const chart = siloCharts[id];
+  if (!chart) return;
+
+  // Initialize data buffer if not already created
+  if (!chartDataBuffers[id]) {
+    chartDataBuffers[id] = {
+      labels: [],
+      temperature: [],
+      humidity: [],
+      co2: []
+    };
+  }
+
+  const buffer = chartDataBuffers[id];
+  const timestamp = new Date().toLocaleTimeString();
+
+  // Add new data
+  buffer.labels.push(timestamp);
+  buffer.temperature.push(data.temperature);
+  buffer.humidity.push(data.humidity);
+  buffer.co2.push(data.co2);
+
+  // Start shifting after 10 data points
+  if (buffer.labels.length > 10) {
+    buffer.labels.shift();
+    buffer.temperature.shift();
+    buffer.humidity.shift();
+    buffer.co2.shift();
+  }
+
+  // Update chart datasets
+  chart.data.labels = buffer.labels;
+  chart.data.datasets[0].data = buffer.temperature;
+  chart.data.datasets[1].data = buffer.humidity;
+  chart.data.datasets[2].data = buffer.co2;
+
+  chart.update();
+}
+
+  socket.on('silos', (silos_list) => {
+    console.log(silos_list)
+    silos=silos_list
+      const container = document.getElementById('siloContainer');
+      container.innerHTML = ''; // Clear existing silos once
+      silos_list.forEach((silo) => {
+        ADDSilo_to_view(silo,container);
+      });
+  });
+  socket.on('silos_data', (dataArray) => {
+  if (!Array.isArray(dataArray)) return;
+
+  dataArray.forEach((silo) => {
+    console.log(silo)
+    const id = silo.id;
+    const prefix = `silo${id}`;
+    const status = silo.connectionStatus || {};
+    const sensor = silo.sensorStatus || {};
+    const actuators = silo.actuatorStatus || {};
+    const refValues = silo.referenceValues || {};
+    console.log(status)
+    // Update sensor values
+    const tempEl = document.getElementById(`${prefix}Temp`);
+    const humidityEl = document.getElementById(`${prefix}Humidity`);
+    const levelEl = document.getElementById(`${prefix}Level`);
+    const co2El = document.getElementById(`${prefix}CO2`);
+    const imageEl = document.getElementById(`${prefix}Image`);
+    const tempRefEl = document.getElementById(`${prefix}TempRefrence`);
+    const humidityRefEl = document.getElementById(`${prefix}HumidityRefrence`);
+    const co2RefEl = document.getElementById(`${prefix}CO2Refrence`);
+
+    if (tempEl) tempEl.textContent = sensor.temperature != null ? `${sensor.temperature}°C` : 'N/A';
+    if (humidityEl) humidityEl.textContent = sensor.humidity != null ? `${sensor.humidity}%` : 'N/A';
+    if (levelEl) levelEl.textContent = sensor.level != null ? `${sensor.level}%` : 'N/A';
+    if (co2El) co2El.textContent = sensor.co2 != null ? `${sensor.co2} ppm` : 'N/A';
+    if (tempRefEl) tempRefEl.textContent = refValues.temperature != null ? `${refValues.temperature}°C` : 'N/A';
+    if (humidityRefEl) humidityRefEl.textContent = refValues.humidity != null ? `${refValues.humidity}%` : 'N/A';
+    if (co2RefEl) co2RefEl.textContent = refValues.co2 != null ? `${refValues.co2} ppm` : 'N/A';
+    // Update chart if implemented
+    updateSiloChart(id, sensor);
+
+    // Update image visual based on connection
+    if (imageEl) {
+      if (!status.connected) {
+        imageEl.style.filter = "sepia(1) hue-rotate(-50deg) saturate(5)";
+        imageEl.style.color = 'red';
+      } else {
+        imageEl.removeAttribute("style");
+      }
+    }
+
+    // Update connection status label
+    const statusEl = document.getElementById(`${prefix}Status`);
+    if (statusEl) {
+      statusEl.textContent = status.connected ? "Online" : "Offline";
+      statusEl.classList.toggle("online", status.connected);
+      statusEl.classList.toggle("offline", !status.connected);
+    }
+
+    // Update last pong time
+    const lastUpdateEl = document.getElementById(`${prefix}LastUpdate`);
+    if (lastUpdateEl) {
+      const time = silo.lastPongTime ? new Date(silo.lastPongTime).toLocaleTimeString() : '--:--:--';
+      lastUpdateEl.textContent = time;
+    }
+
+    // Update actuator-based statuses
+    const actionEl = document.getElementById(`${prefix}ActionStatus`);
+    const coolingEl = document.getElementById(`${prefix}CoolingStatus`);
+    const dryingEl = document.getElementById(`${prefix}DryingStatus`);
+    const emrgstatusEl=document.getElementById(`${prefix}EmergencyStopStatus`);
+    const fillingbtn = document.getElementById(`${prefix}StartFilling`);
+    const emptyingbtn = document.getElementById(`${prefix}StartEmptying`);
+    
+
+    if (actionEl) actionEl.textContent = actuators.action;
+
+    // Cooling status
+    if (coolingEl) coolingEl.textContent = actuators.self_cool ? 'Active' : 'Inactive';
+
+    // Drying (based on fan)
+    if (dryingEl) dryingEl.textContent = actuators.fan ? 'Active' : 'Inactive';
+    
+    if (emrgstatusEl){
+      if(silo?.emergensy_stop){
+        emrgstatusEl.style.display='inline'
+        emrgstatusEl.innerText="Emergency Stoped!";
+      }else if(!silo?.emergensy_stop){
+        emrgstatusEl.style.display='none'
+        emrgstatusEl.innerText='';
+      }
+    }
+    if (fillingbtn){
+      if (!fillingbtn.startHandler) {
+        fillingbtn.startHandler = () => SendCommand(id, 'Filling');
+        fillingbtn.stopHandler = () => SendCommand(id, 'stopFilling');
+      }
+
+      // Always clean previous handlers
+      fillingbtn.removeEventListener('click', fillingbtn.startHandler);
+      fillingbtn.removeEventListener('click', fillingbtn.stopHandler);
+
+      if (!silo.actuatorStatus.filling) {
+        fillingbtn.addEventListener('click', fillingbtn.startHandler);
+        fillingbtn.style.backgroundColor = 'red';
+      } 
+      else {
+        fillingbtn.addEventListener('click', fillingbtn.stopHandler);
+        fillingbtn.style.backgroundColor = 'green';
+      }
+    }
+
+    if (emptyingbtn){
+      if (!emptyingbtn.startHandler) {
+        emptyingbtn.startHandler = () => SendCommand(id, 'Emptying');
+        emptyingbtn.stopHandler = () => SendCommand(id, 'stopEmptying');
+      }
+
+      // Always clean previous handlers
+      emptyingbtn.removeEventListener('click', emptyingbtn.startHandler);
+      emptyingbtn.removeEventListener('click', emptyingbtn.stopHandler);
+
+      if (!silo.actuatorStatus.emptying) {
+        emptyingbtn.addEventListener('click', emptyingbtn.startHandler);
+        emptyingbtn.style.backgroundColor = 'red';
+      } 
+      else {
+        emptyingbtn.addEventListener('click', emptyingbtn.stopHandler);
+        emptyingbtn.style.backgroundColor = 'green';
+      }
+    }
+
+
+  });
+});
+
+  socket.on('topics', (topics) => {
+      topics_list=topics;
+  });
+</script>
+<script>
+  function Publish(topic,message,qos,retain){
+    alert(topic,message,qos,retain)
+    socket.emit("publish",({ topic, message, qos, retain }));
+  }
+  function EmergencyStop(id){
+    if(topics_list?.EmergencyTopic){
+      Publish(topics_list.EmergencyTopic[0].topic + `/${id}/stop`,"hey stop",topics_list.EmergencyTopic[0].qos,false);
+    }
+    else{
+      showNotification('Error', 'No Emegensy topic!', 'error');}
+  }
+  function SendCommand(id,cmd,value){
+    if(topics_list?.CommandTopic && topics_list?.CommandTopic[0].status ==='publisher'){
+    socket.emit('Control', { siloId:id,cmd ,value})
+    }
+    else{
+      showNotification('Error', 'No Commande topic!', 'error');}
+  }
+</script>
+<script>
+  window.onload = function () {
+    const params = new URLSearchParams(window.location.search);
+    const targetId = params.get("id");
+    if (!targetId) return;
+
+    function scrollIfFound() {
+      const el = document.getElementById(targetId);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+      else setTimeout(scrollIfFound, 200);
+    }
+
+    scrollIfFound();
+  };
+</script>
+
+
+    <script src="assets/js/main.js"></script>
+
+    <!-- ====== ionicons ======= -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=favorite,home,search,settings" rel="stylesheet" />
+    
+
+<!-- Load React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Load scripts -->
+   <script type="module" src="assets/js/DataService.js"></script>
+<script src="assets/js/Notification.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/Dashboard.js"></script>
+
+</body>
+</html>
