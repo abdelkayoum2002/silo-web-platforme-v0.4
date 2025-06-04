@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART SILO</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="notification.js"></script>
+    <!-- ======= Styles ====== -->
+     <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+
+<body>
+    <!-- =============== Navigation ================ -->
+    <div class="container">
+      <div class="navigation">
+  
+        <ul>
+          <li>
+            <a href="#">
+              <span class="icon"><ion-icon name=""></ion-icon></span> 
+              <span class="title">Menu</span>
+            </a>
+          </li>
+
+                <li>
+                    <a href="dashboard.html">
+                        <span class="icon">
+                            <ion-icon name="home-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="system.html">
+                        <span class="icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </span>
+                        <span class="title">System</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Messages.html">
+                        <span class="icon">
+                            <ion-icon name="chatbubble-outline"></ion-icon>
+                        </span>
+                        <span class="title">Messages</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Analytics.html">
+                        <span class="icon">
+                            <ion-icon name="analytics-outline"></ion-icon>
+                        </span>
+                        <span class="title">Analytics</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Settings.html">
+                        <span class="icon">
+                            <ion-icon name="settings-outline"></ion-icon>
+                        </span>
+                        <span class="title">Settings</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="Password.html">
+                        <span class="icon">
+                            <ion-icon name="lock-closed-outline"></ion-icon>
+                        </span>
+                        <span class="title">Password</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="index.html">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sign Out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ========================= Main ==================== -->
+        <div class="main">
+
+          <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+
+             <!--    <div class="search">
+                    <label>
+                        <input type="text" placeholder="Search here">
+                        <ion-icon name="search-outline"></ion-icon>
+                    </label>
+                </div>  -->
+
+                <div class="silo">
+                    <span class="title">SMART SILO</span>
+                 
+                </div>
+
+                <div class="user">
+                    <img src="assets/imgs/customer001.jpg" alt="">
+                </div>
+            </div> 
+
+             <div class="analytics-container">
+    <h1 style="text-align: center; color: #21853a; margin-bottom: 30px;" id="siloId"></h1>
+
+      <div class="chart-container">
+        <button id="prev">← Prev(5s)</button>
+        <button id="next">Next(5s) →</button>
+        <select id="scale">
+          <option value="10">10s</option>
+          <option value="60">1min</option>
+          <option value="3600">1h</option>
+          <option value="43200">12h</option>
+          <option value="86400">1 day</option>
+        </select>
+        <select id="siloSelect"></select>
+        <canvas id="Chart"></canvas>
+      </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="system.html" class="btn" style="padding: 10px 20px; background-color: #21853a; color: white; border-radius: 8px; text-decoration: none;" id="btn">⟵ Back to the system</a>
+    </div>
+  </div>
+
+
+    
+  </div>
+
+ <script>
+  let WINDOW_SIZE;
+  let STEP_SIZE;
+  let chartData;
+  let startIndex;
+  let endIndex;
+  let maxT;
+  let minT;
+  let currentTime;
+  let navpos=0;
+
+  function chartInit(id){
+    document.getElementById('siloId').innerHTML = `Analytics - Silo ${id} - Real Time`;
+    document.getElementById('btn').href = `system.html?id=${id}`;
+    document.getElementById('siloSelect').value=id;
+    WINDOW_SIZE = 10000 //10s
+    STEP_SIZE = 5000 //5s
+    chartData = []; // Global array for all loaded data
+    startIndex = null; // left bound of view
+    endIndex = null;   // right bound of view
+    maxT = null;
+    minT = null;
+    currentTime = null;
+    navpos = 0;
+    getDataIndex(id);
+  }
+
+  function getDataIndex(siloId){
+    socket.emit('SQLCommande', {Commande: 'getlastSnr',Paramtere: { siloId: siloId}});
+    socket.once('storedlastSensor_time',(Index) =>{
+    console.log(Index)
+    endIndex=Index.data.id;
+    startIndex=endIndex-99;
+    console.log(endIndex);
+    console.log(startIndex)
+    socket.emit('SQLCommande', {Commande: 'getSnr',Paramtere: {siloId: siloId,from: startIndex,to: endIndex}});
+    });
+  }
+
+  function updateChartData(raw) {
+    // Update datasets
+    myChart.data.datasets[0].data = raw.map(p => ({ x: new Date(p.timestamp), y: p.temperature }));
+    myChart.data.datasets[1].data = raw.map(p => ({ x: new Date(p.timestamp), y: p.humidity }));
+    myChart.data.datasets[2].data = raw.map(p => ({ x: new Date(p.timestamp), y: p.co2 }));
+    myChart.data.datasets[3].data = raw.map(p => ({ x: new Date(p.timestamp), y: p.level }));
+
+    // Safely determine time bounds
+    minT = raw[0]?.timestamp ? new Date(raw[0].timestamp) : undefined;
+    maxT = raw[raw.length - 1]?.timestamp ? new Date(raw[raw.length - 1].timestamp) : undefined;
+    if (minT.getTime() === maxT.getTime()) {
+      maxT = new Date(minT.getTime() + WINDOW_SIZE);
+    }
+    console.log("Time bounds:", minT, maxT);
+    if(navpos==0){maxT = new Date(maxT.getTime() + 2000)}
+    currentTime = new Date(maxT.getTime()-WINDOW_SIZE);
+    myChart.options.scales.x.min = currentTime.toISOString();
+    myChart.options.scales.x.max = maxT.toISOString();
+    myChart.update();
+ }
+  
+  function updateChartWindow(){
+  
+  }
+
+function scrollLeft() {
+  // Move time window back by 5 seconds
+  const newStart = new Date(currentTime.getTime() - 5000);
+  const newEnd = new Date(newStart.getTime() + 10000);
+
+  // Check if we're beyond available data
+  if (newStart.getTime() < minT.getTime()) {
+    // If more data is available in DB, load earlier window
+    if (startIndex >= 0) {
+      startIndex = startIndex - 100;
+      if (startIndex < 0) startIndex = 0;
+
+      endIndex = startIndex + 100;
+
+      socket.emit('SQLCommande', {
+        Commande: 'getSnr',
+        Paramtere: {
+          siloId: 'silo123',
+          from: startIndex,
+          to: endIndex
+        }
+      });
+    } else {
+      // Clamp to minT
+      currentTime = new Date(minT);
+      myChart.options.scales.x.min = currentTime.toISOString();
+      myChart.options.scales.x.max = new Date(currentTime.getTime() + 10000).toISOString();
+      myChart.update();
+    }
+  } else {
+    // Update current time
+    currentTime = newStart;
+    myChart.options.scales.x.min = newStart.toISOString();
+    myChart.options.scales.x.max = newEnd.toISOString();
+    myChart.update();
+  }
+
+  navpos--;
+}
+
+function scrollRight() {
+  if(navpos<0){
+  const newStart = new Date(currentTime.getTime() + 5000);
+  const newEnd = new Date(newStart.getTime() + 10000);
+
+  // Check if we're moving past the currently loaded data
+  if (newEnd.getTime() > maxT.getTime()) {
+    // Load more data if available
+    startIndex = startIndex + 100;
+    endIndex = endIndex + 100;
+
+    socket.emit('SQLCommande', {
+      Commande: 'getSnr',
+      Paramtere: {
+        siloId: 'silo123',
+        from: startIndex,
+        to: endIndex
+      }
+    });
+
+    // Optionally: wait for the new data before updating the window,
+    // OR keep updating the chart to give a smoother scroll experience
+  } else {
+    // Safe to scroll within current data
+    currentTime = newStart;
+    myChart.options.scales.x.min = newStart.toISOString();
+    myChart.options.scales.x.max = newEnd.toISOString();
+    myChart.update();
+  }
+
+  navpos++;
+}
+}
+ 
+ </script>
+ <script>
+  const params = new URLSearchParams(window.location.search);
+  let id = params.get('id');
+  const ctx = document.getElementById('Chart').getContext('2d');
+  const myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+      datasets: [
+        {
+          label: 'Temperature (°C)',
+          data: [],
+          borderColor: 'red',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        },
+        {
+          label: 'Humidity (%)',
+          data: [],
+          borderColor: 'blue',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        },
+        {
+          label: 'CO2 (g/L)',
+          data: [],
+          borderColor: 'green',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        },
+        {
+          label: 'Level (%)',
+          data: [],
+          borderColor: 'orange',
+          tension: 0.3,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+        }
+      ]
+      },
+      options: {
+        animation: false,
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              unit: 'second',
+              tooltipFormat: 'HH:mm:ss'
+            },
+            ticks: { source: 'auto' },
+          },
+          y: {
+            title: { display: true, text: 'Value' },
+            min:undefined,
+            max:undefined
+          }
+        }
+      }
+    });
+ </script>
+ <script>
+  socket.on('silos' ,(silos_list) =>{
+    console.log(silos_list)
+    document.getElementById('siloSelect').innerHTML = '';
+    silos_list.forEach(silo => {
+      const option = document.createElement('option');
+      option.value = silo;
+      option.textContent = silo;
+      document.getElementById('siloSelect').appendChild(option);
+    });
+    if(!id){
+      id=silos_list[0];
+    }
+    if(id!==undefined){
+      chartInit(id);
+    }
+    else{
+      document.getElementById('siloId').innerHTML=`Analytics (no silos here)`;
+    }
+  })
+  
+  socket.on('storedSensor_data', (data) => {
+    console.log(data.data)
+    const raw = data.data;
+    updateChartData(raw);
+  })
+  
+  document.getElementById('siloSelect').addEventListener('change', () => {
+    id = document.getElementById('siloSelect').value;
+    chartInit(id);
+  });
+
+  document.getElementById('prev').addEventListener('click', () => {
+    scrollLeft();
+  })
+  document.getElementById('next').addEventListener('click', () => {
+    scrollRight();
+  })
+ </script>
+ <!-- =========== Scripts =========  -->
+ <!-- <script src="assets/js/analytic.js"></script> -->
+ <script src="assets/js/main.js"></script>
+
+ <!-- ====== ionicons ======= -->
+ <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+ <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+
+ <!-- Load React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Load scripts -->
+<script type="module" src="assets/js/DataService.js"></script>
+<script src="assets/js/Notification.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/Dashboard.js"></script>
+ 
+</body>
+
+</html> 

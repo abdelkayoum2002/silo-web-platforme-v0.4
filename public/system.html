@@ -24,7 +24,87 @@
   color: var(--black2);
   min-width: 30px;
 }
+/* Container styles */
+.global-status,
+.emergency-section,
+.operation-status,
+.action-controls {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background-color: var(--white);
+}
 
+/* Global silo status */
+.status-indicator {
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: white;
+}
+.status-indicator.online {
+  background-color: #28a745; /* Green */
+}
+.status-indicator.offline {
+  background-color: #dc3545; /* Red */
+}
+.last-update {
+  margin-left: 10px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Emergency Stop */
+.emergency-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.emergency-status {
+  color: #dc3545;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+.emergencybtn {
+  background-color: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.emergencybtn:hover {
+  background-color: #c82333;
+}
+
+/* Operation Status */
+.operation-status h3 {
+  margin: 0 0 8px;
+  font-size: 1.1em;
+}
+.operation-status p {
+  margin: 4px 0;
+}
+
+/* Action Controls */
+.action-controls {
+  display: flex;
+  gap: 10px;
+}
+.action-controls button {
+  flex: 1;
+  padding: 10px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+}
     </style>
 </head>
 <body>
@@ -153,8 +233,8 @@ function ADDSilo_to_view(id,container){
 
   <!-- Emergency Stop -->
   <div class="emergency-section">
-    <span id="silo${id}EmergencyStopStatus" class="emergency-status" style="display:none"></span>
     <button class="emergencybtn" id="silo${id}EmergencyStop">EMERGENCY STOP</button>
+    <span id="silo${id}EmergencyStopStatus" class="emergency-status" style="display:none"></span>
   </div>
 
   <!-- Current Operation Status -->
@@ -181,7 +261,11 @@ function ADDSilo_to_view(id,container){
         <input class="numberInput" type="number" id="silo${id}TempInput"> 
       </div>
       <div class="Refrence" id="silo${id}TempRefrence">--</div>
-      <div class="numbers" id="silo${id}Temp">--</div>
+      <div class="numbers" id="silo${id}Temp">
+        <div class="numbers" id="silo${id}TempL3">--</div>
+        <div class="numbers" id="silo${id}TempL2">--</div>
+        <div class="numbers" id="silo${id}TempL1">--</div>
+      </div>
       <div class="cardName">Temperature (°C)</div>
     </div>
     <div class="iconBx" id="silo${id}TempIcon"><ion-icon name="thermometer-outline"></ion-icon></div>
@@ -194,7 +278,11 @@ function ADDSilo_to_view(id,container){
         <button class="btn" id="silo${id}Humiditybtn" style="display: inline;">Cancel</button>
       </div>
       <div class="Refrence" id="silo${id}HumidityRefrence">--</div>
-      <div class="numbers" id="silo${id}Humidity">--</div>
+      <div class="numbers" id="silo${id}Humidity">
+        <div class="numbers" id="silo${id}HumidityL3">--</div>
+        <div class="numbers" id="silo${id}HumidityL2">--</div>
+        <div class="numbers" id="silo${id}HumidityL1">--</div>
+      </div>
       <div class="cardName">Humidity (%)</div>
     </div>
     <div class="iconBx" id="silo${id}HumidityIcon"><ion-icon name="water-outline"></ion-icon></div>
@@ -433,8 +521,16 @@ function updateSiloChart(id, data) {
     const refValues = silo.referenceValues || {};
     console.log(status)
     // Update sensor values
-    const tempEl = document.getElementById(`${prefix}Temp`);
-    const humidityEl = document.getElementById(`${prefix}Humidity`);
+    const tempEl = {
+      L3:document.getElementById(`${prefix}TempL3`),
+      L2:document.getElementById(`${prefix}TempL2`),
+      L1:document.getElementById(`${prefix}TempL1`)
+    }
+    const humidityEl = {
+      L3:document.getElementById(`${prefix}HumidityL3`),
+      L2:document.getElementById(`${prefix}HumidityL2`),
+      L1:document.getElementById(`${prefix}HumidityL1`),
+    }
     const levelEl = document.getElementById(`${prefix}Level`);
     const co2El = document.getElementById(`${prefix}CO2`);
     const imageEl = document.getElementById(`${prefix}Image`);
@@ -442,8 +538,12 @@ function updateSiloChart(id, data) {
     const humidityRefEl = document.getElementById(`${prefix}HumidityRefrence`);
     const co2RefEl = document.getElementById(`${prefix}CO2Refrence`);
 
-    if (tempEl) tempEl.textContent = sensor.temperature != null ? `${sensor.temperature}°C` : 'N/A';
-    if (humidityEl) humidityEl.textContent = sensor.humidity != null ? `${sensor.humidity}%` : 'N/A';
+    if (tempEl.L3) tempEl.L3.textContent = sensor.temperature.level3 != null ? `${sensor.temperature.level3}°C` : 'N/A';
+    if (tempEl.L2) tempEl.L2.textContent = sensor.temperature.level2 != null ? `${sensor.temperature.level2}°C` : 'N/A';
+    if (tempEl.L1) tempEl.L1.textContent = sensor.temperature.level1 != null ? `${sensor.temperature.level1}°C` : 'N/A';
+    if (humidityEl.L3) humidityEl.L3.textContent = sensor.humidity.level3 != null ? `${sensor.humidity.level3}%` : 'N/A';
+    if (humidityEl.L2) humidityEl.L2.textContent = sensor.humidity.level2 != null ? `${sensor.humidity.level2}%` : 'N/A';
+    if (humidityEl.L1) humidityEl.L1.textContent = sensor.humidity.level1 != null ? `${sensor.humidity.level1}%` : 'N/A';
     if (levelEl) levelEl.textContent = sensor.level != null ? `${sensor.level}%` : 'N/A';
     if (co2El) co2El.textContent = sensor.co2 != null ? `${sensor.co2} ppm` : 'N/A';
     if (tempRefEl) tempRefEl.textContent = refValues.temperature != null ? `${refValues.temperature}°C` : 'N/A';

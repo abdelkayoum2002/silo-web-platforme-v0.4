@@ -64,8 +64,14 @@ function addSilo(id) {
       },
       lastPongTime: null,
       sensorStatus: {
-        temperature: null,
-        humidity: null,
+        temperature: {
+          level3:null,
+          level2:null,
+          level1:null},
+        humidity: {
+          level3:null,
+          level2:null,
+          level1:null},
         co2: null,
         level: null
       },

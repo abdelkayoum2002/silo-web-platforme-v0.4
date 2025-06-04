@@ -226,7 +226,6 @@
 function createSiloCard(id) {
   return `
     <div class="silo-box" id="silo-${id}" onclick="location.href='system.html?id=${id}'" style="cursor: pointer;">
-      <button class="delete-btn" onclick="event.stopPropagation(); socket.emit('delete_silo', '${id}')">&times;</button>
       <img src="silo1.png" alt="Silo Image" />
       <div class="basic-info">
         <h2 id="silo_${id}">Silo ID: ${id}</h2>
@@ -234,8 +233,15 @@ function createSiloCard(id) {
       </div>
       <div class="details">
         <p><strong>Ping:<span id="ping_${id}">N/A</span></strong></p>
-        <p><strong>Temperature:</strong> <span id="temp_${id}">N/A</span>°C</p>
-        <p><strong>Humidity:</strong> <span id="hum_${id}">N/A</span>%</p>
+        <p><strong>Temperature:</strong> <span id="tempL3_${id}">--</span>
+                                         <span id="tempL2_${id}">--</span>
+                                         <span id="tempL1_${id}">--</span>°C
+        </p>
+        <p><strong>Humidity:</strong> <span id="humL3_${id}">--</span>
+                                      <span id="humL2_${id}">--</span>
+                                      <span id="humL1_${id}">--</span>%
+            
+        </p>
         <p><strong>CO₂:</strong> <span id="co2_${id}">N/A</span> ppm</p>
         <p><strong>Evaluator:</strong> <span id="eval_${id}">N/A</span></p>
         <p><strong>Vane:</strong> <span id="vane_${id}">N/A</span></p>
@@ -285,8 +291,16 @@ socket.on('silos_data', (silos_data) => {
 
     const statusElem = document.getElementById(`status_${id}`);
     const pingElem = document.getElementById(`ping_${id}`);
-    const tempElem = document.getElementById(`temp_${id}`);
-    const humElem = document.getElementById(`hum_${id}`);
+    const tempElem = {
+      L3:document.getElementById(`tempL3_${id}`),
+      L2:document.getElementById(`tempL2_${id}`),
+      L1:document.getElementById(`tempL1_${id}`)
+    }
+    const humElem = {
+      L3:document.getElementById(`humL3_${id}`),
+      L2:document.getElementById(`humL2_${id}`),
+      L1:document.getElementById(`humL1_${id}`)
+    }
     const co2Elem = document.getElementById(`co2_${id}`);
     const evalElem = document.getElementById(`eval_${id}`);
     const vaneElem = document.getElementById(`vane_${id}`);
@@ -297,8 +311,12 @@ socket.on('silos_data', (silos_data) => {
     statusElem.className = `status ${isConnected ? "connected" : "disconnected"}`;
 
     pingElem.textContent = data.connectionStatus?.ping ?? "N/A";
-    tempElem.textContent = data.sensorStatus?.temperature ?? "N/A";
-    humElem.textContent = data.sensorStatus?.humidity ?? "N/A";
+    tempElem.L3.textContent = data.sensorStatus?.temperature?.level3 ?? "N/A";
+    tempElem.L2.textContent = data.sensorStatus?.temperature?.level2 ?? "N/A";
+    tempElem.L1.textContent = data.sensorStatus?.temperature?.level1 ?? "N/A";
+    humElem.L3.textContent = data.sensorStatus?.humidity?.level3 ?? "N/A";
+    humElem.L2.textContent = data.sensorStatus?.humidity?.level2 ?? "N/A";
+    humElem.L1.textContent = data.sensorStatus?.humidity?.level1 ?? "N/A";
     co2Elem.textContent = data.sensorStatus?.co2 ?? "N/A";
     evalElem.textContent = data.actuatorStatus?.evaluator ?? "N/A";
     vaneElem.textContent = data.actuatorStatus?.vane ?? "N/A";

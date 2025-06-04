@@ -1,5 +1,6 @@
 
 const CLIENTService = require('./CLIENTServices');
+const { getCollection } = require('./mongoClient');
 const Database = require('better-sqlite3');
 const db = new Database('silo_data.db');
 
@@ -10,8 +11,12 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS sensor_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     silo_id TEXT NOT NULL,
-    temperature REAL,
-    humidity REAL,
+    temperature_level1 REAL,
+    temperature_level2 REAL,
+    temperature_level3 REAL,
+    humidity_level1 REAL,
+    humidity_level2 REAL,
+    humidity_level3 REAL,
     co2 REAL,
     level REAL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -40,10 +45,10 @@ function init(io) {
 function storeSensersData(siloId, data) {
   try {
     const stmt = db.prepare(`
-      INSERT INTO sensor_data (silo_id, temperature, humidity, co2, level)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO sensor_data (silo_id, temperature_level1, temperature_level2, temperature_level3, humidity_level1, humidity_level2, humidity_level3, co2, level)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(siloId, data.temperature, data.humidity, data.co2, data.level);
+    stmt.run(siloId, data.temperature.level1, data.temperature.level2, data.temperature.level3, data.humidity.level1, data.humidity.level2, data.humidity.level3, data.co2, data.level);
     console.log(`✔ sensor Data stored for silo ${siloId}`);
   } catch (err) {
     console.error('DB Error:', err.message);
@@ -146,7 +151,7 @@ function SQLCommande(query, targetsocket) {
         break;
       case 'getallSnr':
         const allsnrData = db.prepare(`
-          SELECT temperature, humidity, co2, level, timestamp
+          SELECT temperature_level1, temperature_level2, temperature_level3, humidity_level1, humidity_level2, humidity_level3, co2, level, timestamp
           FROM sensor_data
           WHERE silo_id = ?
           ORDER BY timestamp DESC, id DESC
@@ -175,8 +180,14 @@ function DDS(msg){
         const reference = data?.referenceValues;
           if(sensor){
             silo.sensorStatus = {
-                temperature: sensor?.temperature ?? null,
-                humidity: sensor?.humidity ?? null,
+                temperature: {
+                  level3:sensor?.temperature?.level3 ?? null,
+                  level2:sensor?.temperature?.level2 ?? null,
+                  level1:sensor?.temperature?.level1 ?? null,},
+                humidity: {
+                  level3:sensor?.humidity?.level3 ?? null,
+                  level2:sensor?.humidity?.level2 ?? null,
+                  level1:sensor?.humidity?.level1 ?? null,},
                 co2: sensor?.co2 ?? null,
                 level: sensor?.level ?? null
             };
